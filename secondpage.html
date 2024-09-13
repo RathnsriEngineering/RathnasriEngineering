@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Things</title>
+    <link rel="icon" href="images/logo.png" type="image/png">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #image-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            max-width: 100%;
+        }
+
+        .image-container {
+            padding: 10px;
+            margin: 5px;
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            text-align: center;
+            width: 300px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            flex-grow: 0;
+        }
+
+        .image-caption {
+            margin-top: 20px;
+            font-size: 18px;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            flex-grow: 1;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .page-btn {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .page-btn.active {
+            background-color: #0056b3;
+        }
+
+        .page-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .page-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>    
+</head>
+<body>
+
+<div id="image-container"></div>
+<div id="pagination-container"></div>
+
+<script src="imageData.js"></script>
+<script>
+    const imagesPerPage = 12;
+    let currentPage = 1;
+
+    function createImage(imageInfo) {
+        const div = document.createElement('div');
+        div.className = 'image-container';
+        
+        const link = document.createElement('a');
+        link.href = imageInfo.link;
+        link.target = '_blank';
+        
+        const img = document.createElement('img');
+        img.src = imageInfo.src;
+        img.alt = imageInfo.caption;
+        
+        const caption = document.createElement('p');
+        caption.className = 'image-caption';
+        caption.textContent = imageInfo.caption;
+        
+        link.appendChild(img);
+        link.appendChild(caption);
+        div.appendChild(link);
+        
+        return div;
+    }
+
+    function loadPage(page) {
+        const container = document.getElementById('image-container');
+        container.innerHTML = '';
+        const start = (page - 1) * imagesPerPage;
+        const end = Math.min(start + imagesPerPage, imageData.length);
+        for (let i = start; i < end; i++) {
+            container.appendChild(createImage(imageData[i]));
+        }
+        localStorage.setItem('currentPage', page);
+    }
+
+    function PaginationButton(totalPages, maxPagesVisible = 15, currentPage = 1) {
+        const paginationButtonContainer = document.createElement('div');
+        paginationButtonContainer.className = 'pagination-buttons';
+        
+        const createButton = (label, cls, disabled, handleClick) => {
+            const button = document.createElement('button');
+            button.textContent = label;
+            button.className = `page-btn ${cls}`;
+            button.disabled = disabled;
+            button.addEventListener('click', handleClick);
+            return button;
+        };
+
+        const render = () => {
+            paginationButtonContainer.innerHTML = '';
+
+            const startButton = createButton('start', 'start-page', currentPage === 1, () => {
+                currentPage = 1;
+                render();
+                loadPage(currentPage);
+            });
+            paginationButtonContainer.appendChild(startButton);
+
+            const prevButton = createButton('prev', 'prev-page', currentPage === 1, () => {
+                currentPage = Math.max(currentPage - 1, 1);
+                render();
+                loadPage(currentPage);
+            });
+            paginationButtonContainer.appendChild(prevButton);
+
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesVisible - 1);
+
+            if (endPage - startPage + 1 < maxPagesVisible) {
+                startPage = Math.max(1, endPage - maxPagesVisible + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = createButton(i.toString(), i === currentPage ? 'active' : '', false, () => {
+                    currentPage = i;
+                    render();
+                    loadPage(currentPage);
+                });
+                paginationButtonContainer.appendChild(pageButton);
+            }
+
+            const nextButton = createButton('next', 'next-page', currentPage === totalPages, () => {
+                currentPage = Math.min(currentPage + 1, totalPages);
+                render();
+                loadPage(currentPage);
+            });
+            paginationButtonContainer.appendChild(nextButton);
+
+            const endButton = createButton('end', 'end-page', currentPage === totalPages, () => {
+                currentPage = totalPages;
+                render();
+                loadPage(currentPage);
+            });
+            paginationButtonContainer.appendChild(endButton);
+        };
+
+        this.render = (container = document.body) => {
+            render();
+            container.appendChild(paginationButtonContainer);
+        };
+
+        this.onChange = (handler) => {
+            paginationButtonContainer.addEventListener('click', handler);
+        };
+    }
+
+    function init() {
+        const savedPage = parseInt(localStorage.getItem('currentPage'), 10) || 1;
+        currentPage = savedPage;
+        
+        const totalPages = Math.ceil(imageData.length / imagesPerPage);
+        const paginationButtons = new PaginationButton(totalPages, 15, currentPage);
+        
+        paginationButtons.render(document.getElementById('pagination-container'));
+        
+        loadPage(currentPage);
+    }
+
+    window.addEventListener('load', init);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to CPE World</title>
+    <link rel="icon" href="images/logo.png" type="image/png">
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Roboto:700');
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center; /* Keeps the content vertically centered */
+        }
+        
+        @keyframes showTopText {
+            0% { transform: translate3d(0, 100%, 0); }
+            40%, 60% { transform: translate3d(0, 50%, 0); }
+            100% { transform: translate3d(0, 0, 0); }
+        }
+        
+        @keyframes showBottomText {
+            0% { transform: translate3d(0, -100%, 0); }
+            100% { transform: translate3d(0, 0, 0); }
+        }
+        
+        .animated-title {
+            color: #222;
+            font-family: Roboto, Arial, sans-serif;
+            height: 90vmin;
+            position: relative;
+            width: 90vmin;
+            padding-left: 20px; /* Add padding for space on the left */
+            box-sizing: border-box; /* Ensures padding doesn't affect width */
+        }
+        
+        .animated-title > div {
+            height: 50%;
+            overflow: hidden;
+            position: absolute;
+            width: 100%;
+        }
+        
+        .animated-title > div div {
+            font-size: 12vmin;
+            padding: 2vmin 0;
+            position: absolute;
+        }
+        
+        .animated-title > div div span {
+            display: block;
+        }
+        
+        .animated-title > div.text-top {
+            border-bottom: 1vmin solid #000;
+            top: 0;
+        }
+        
+        .animated-title > div.text-top div {
+            animation: showTopText 1s;
+            animation-delay: 0.5s;
+            animation-fill-mode: forwards;
+            bottom: 0;
+            transform: translate(0, 100%);
+        }
+        
+        .animated-title > div.text-top div span:first-child {
+            color: #767676;
+        }
+        
+        .animated-title > div.text-bottom {
+            bottom: 0;
+        }
+        
+        .animated-title > div.text-bottom div {
+            animation: showBottomText 0.5s;
+            animation-delay: 1.75s;
+            animation-fill-mode: forwards;
+            top: 0;
+            transform: translate(0, -100%);
+        }
+        .center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-title">
+        <div class="text-top">
+            <div>
+                <span>welcome to</span>
+                <span>chemical</span>
+            </div>
+        </div>
+        <div class="text-bottom">
+            <div>process engineering world, <a href="secondpage.html">click</a></div>
+        </div>
+    </div>
+    <img src="images/logo.jpeg" alt="CPELOGO" class="center">
+</body>
+</html>
