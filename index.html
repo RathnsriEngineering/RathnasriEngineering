@@ -90,7 +90,29 @@
             width: 50%;
         }
 
-        /* Apply different styles only for smaller screens */
+        /* Apply different styles for all tablet screens */
+        @media (min-width: 769px) and (max-width: 1280px) {
+            body, html {
+                flex-direction: column;
+                justify-content: space-around;
+            }
+
+            .animated-title {
+                height: 85vmin;
+                width: 85vmin;
+                padding-left: 10px; /* Slightly reduce padding */
+            }
+
+            .animated-title > div div {
+                font-size: 11vmin; /* Adjust text size slightly smaller */
+            }
+
+            .center {
+                width: 50%; /* Adjust image size for tablet screens */
+            }
+        }
+
+        /* Apply different styles for smaller tablets and mobile screens */
         @media (max-width: 768px) {
             body, html {
                 flex-direction: column;
