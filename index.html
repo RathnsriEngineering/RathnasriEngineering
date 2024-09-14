@@ -7,7 +7,7 @@
     <link rel="icon" href="images/logo.png" type="image/png">
     <style>
         @import url('https://fonts.googleapis.com/css?family=Roboto:700');
-
+        
         body, html {
             margin: 0;
             padding: 0;
@@ -90,33 +90,8 @@
             width: 50%;
         }
 
-        /* Apply different styles for tablet screens */
-        @media (min-width: 481px) and (max-width: 768px) {
-            body, html {
-                flex-direction: column;
-                justify-content: space-around;
-            }
-
-            .animated-title {
-                height: auto;
-                width: 80%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                padding-left: 0; /* Remove extra padding on the left for cleaner look */
-            }
-
-            .animated-title > div div {
-                font-size: 10vmin; /* Slightly smaller text for tablets */
-            }
-
-            .center {
-                width: 55%; /* Adjust image size for tablets */
-            }
-        }
-
         /* Apply different styles only for smaller screens */
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
             body, html {
                 flex-direction: column;
                 justify-content: space-between;
@@ -125,11 +100,23 @@
             .animated-title {
                 height: auto;
                 width: 100%;
+                flex: 1; /* Fill the top part of the screen */
                 display: flex;
                 justify-content: center;
                 align-items: center;
             }
 
+            .animated-title > div div {
+                font-size: 10vmin;
+            }
+
+            .center {
+                width: 60%;
+                margin-top: auto; /* Ensure the image stays at the bottom */
+            }
+        }
+
+        @media (max-width: 480px) {
             .animated-title > div div {
                 font-size: 8vmin;
             }
