@@ -85,6 +85,59 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
+
+        /* Responsive Styles for Tablets */
+        @media (max-width: 768px) {
+            #image-container {
+                margin-top: 10px;
+            }
+
+            .image-container {
+                width: 220px;
+                height: auto;
+            }
+
+            .image-caption {
+                font-size: 16px;
+            }
+
+            .pagination-buttons {
+                margin-top: 10px;
+            }
+
+            .page-btn {
+                padding: 8px 12px;
+                margin: 3px;
+            }
+        }
+
+        /* Responsive Styles for Smartphones */
+        @media (max-width: 480px) {
+            .image-container {
+                width: 160px;
+                height: auto;
+            }
+
+            .image-caption {
+                font-size: 14px;
+            }
+
+            .page-btn {
+                padding: 5px 8px;
+                margin: 2px;
+            }
+
+            .pagination-buttons {
+                margin-top: 5px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+
+            .pagination-buttons .page-btn {
+                min-width: 40px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
