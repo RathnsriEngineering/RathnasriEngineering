@@ -432,6 +432,7 @@
         /**
          * PaginationButton Class
          * Manages the creation and handling of pagination buttons.
+         * Utilizes event delegation to minimize event listeners and prevent memory leaks.
          */
         class PaginationButton {
             /**
@@ -447,6 +448,7 @@
                 this.currentPage = currentPage;
                 this.onPageChange = onPageChange;
                 this.paginationButtonContainer = null;
+                this.handleClick = this.handleClick.bind(this);
             }
 
             /**
@@ -454,17 +456,13 @@
              * @param {string} label - The text label for the button.
              * @param {string} cls - Additional class names.
              * @param {boolean} disabled - Whether the button is disabled.
-             * @param {Function} handleClick - Click event handler.
              * @returns {HTMLElement} - The button element.
              */
-            createButton(label, cls = '', disabled = false, handleClick = null) {
+            createButton(label, cls = '', disabled = false) {
                 const button = document.createElement('button');
                 button.textContent = label;
                 button.className = `page-btn ${cls}`;
                 button.disabled = disabled;
-                if (handleClick) {
-                    button.addEventListener('click', handleClick);
-                }
                 return button;
             }
 
@@ -482,10 +480,56 @@
                 this.paginationButtonContainer.className = 'pagination-buttons';
                 this.paginationButtonContainer.setAttribute('aria-label', 'Pagination');
 
+                // Attach event listener for event delegation
+                this.paginationButtonContainer.addEventListener('click', this.handleClick);
+
                 this.renderButtons();
 
                 container.innerHTML = ''; // Clear existing content
                 container.appendChild(this.paginationButtonContainer);
+            }
+
+            /**
+             * Handles click events on pagination buttons using event delegation.
+             * @param {Event} event - The click event.
+             */
+            handleClick(event) {
+                const button = event.target.closest('button.page-btn');
+                if (!button || button.disabled) return;
+
+                const label = button.textContent;
+
+                switch(label) {
+                    case 'First':
+                        if (this.currentPage !== 1) {
+                            this.onPageChange(1);
+                        }
+                        break;
+                    case 'Prev':
+                        if (this.currentPage > 1) {
+                            this.onPageChange(this.currentPage - 1);
+                        }
+                        break;
+                    case 'Next':
+                        if (this.currentPage < this.totalPages) {
+                            this.onPageChange(this.currentPage + 1);
+                        }
+                        break;
+                    case 'Last':
+                        if (this.currentPage !== this.totalPages) {
+                            this.onPageChange(this.totalPages);
+                        }
+                        break;
+                    case '...':
+                        // Do nothing for disabled ellipsis
+                        break;
+                    default:
+                        const pageNumber = parseInt(label, 10);
+                        if (!isNaN(pageNumber) && pageNumber !== this.currentPage) {
+                            this.onPageChange(pageNumber);
+                        }
+                        break;
+                }
             }
 
             /**
@@ -507,19 +551,11 @@
                 this.paginationButtonContainer.innerHTML = '';
 
                 // Start button
-                const startButton = this.createButton('First', '', this.currentPage === 1, () => {
-                    if (this.currentPage !== 1) {
-                        this.onPageChange(1);
-                    }
-                });
+                const startButton = this.createButton('First', '', this.currentPage === 1);
                 this.paginationButtonContainer.appendChild(startButton);
 
                 // Previous button
-                const prevButton = this.createButton('Prev', '', this.currentPage === 1, () => {
-                    if (this.currentPage > 1) {
-                        this.onPageChange(this.currentPage - 1);
-                    }
-                });
+                const prevButton = this.createButton('Prev', '', this.currentPage === 1);
                 this.paginationButtonContainer.appendChild(prevButton);
 
                 // Determine the range of page buttons to display
@@ -531,54 +567,34 @@
                     startPage = Math.max(1, endPage - this.maxPagesVisible + 1);
                 }
 
-                // Add ellipsis if needed
+                // Add ellipsis and first page button if necessary
                 if (startPage > 2) {
                     this.paginationButtonContainer.appendChild(this.createButton('...', 'disabled', true));
                 } else if (startPage === 2) {
-                    // Include page 1 if startPage is 2
-                    const firstPageButton = this.createButton('1', this.currentPage === 1 ? 'active' : '', false, () => {
-                        if (this.currentPage !== 1) {
-                            this.onPageChange(1);
-                        }
-                    });
+                    const firstPageButton = this.createButton('1', this.currentPage === 1 ? 'active' : '');
                     this.paginationButtonContainer.appendChild(firstPageButton);
                 }
 
+                // Add numbered page buttons
                 for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = this.createButton(i.toString(), i === this.currentPage ? 'active' : '', false, () => {
-                        if (i !== this.currentPage) {
-                            this.onPageChange(i);
-                        }
-                    });
+                    const pageButton = this.createButton(i.toString(), i === this.currentPage ? 'active' : '');
                     this.paginationButtonContainer.appendChild(pageButton);
                 }
 
+                // Add ellipsis and last page button if necessary
                 if (endPage < this.totalPages - 1) {
                     this.paginationButtonContainer.appendChild(this.createButton('...', 'disabled', true));
                 } else if (endPage === this.totalPages - 1) {
-                    // Include the last page if endPage is just before the last
-                    const lastPageButton = this.createButton(this.totalPages.toString(), this.currentPage === this.totalPages ? 'active' : '', false, () => {
-                        if (this.currentPage !== this.totalPages) {
-                            this.onPageChange(this.totalPages);
-                        }
-                    });
+                    const lastPageButton = this.createButton(this.totalPages.toString(), this.currentPage === this.totalPages ? 'active' : '');
                     this.paginationButtonContainer.appendChild(lastPageButton);
                 }
 
                 // Next button
-                const nextButton = this.createButton('Next', '', this.currentPage === this.totalPages, () => {
-                    if (this.currentPage < this.totalPages) {
-                        this.onPageChange(this.currentPage + 1);
-                    }
-                });
+                const nextButton = this.createButton('Next', '', this.currentPage === this.totalPages);
                 this.paginationButtonContainer.appendChild(nextButton);
 
                 // End button
-                const endButton = this.createButton('Last', '', this.currentPage === this.totalPages, () => {
-                    if (this.currentPage !== this.totalPages) {
-                        this.onPageChange(this.totalPages);
-                    }
-                });
+                const endButton = this.createButton('Last', '', this.currentPage === this.totalPages);
                 this.paginationButtonContainer.appendChild(endButton);
             }
 
@@ -587,7 +603,10 @@
              */
             destroy() {
                 if (this.paginationButtonContainer) {
-                    // Remove all child event listeners by cloning nodes
+                    // Remove event listener for event delegation
+                    this.paginationButtonContainer.removeEventListener('click', this.handleClick);
+
+                    // Remove all child event listeners by cloning nodes (if any)
                     const buttons = this.paginationButtonContainer.querySelectorAll('button.page-btn');
                     buttons.forEach(button => {
                         const clone = button.cloneNode(true);
