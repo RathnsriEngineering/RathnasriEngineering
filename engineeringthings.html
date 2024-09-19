@@ -227,9 +227,6 @@
                 this.paginationContainer = document.getElementById(options.paginationContainerId);
                 this.observer = null; // IntersectionObserver instance
                 this.pagination = null; // PaginationButton instance
-                this.pageCache = {}; // Cache for storing loaded pages as HTML strings
-                this.maxCacheSize = options.maxCacheSize || 5; // Maximum number of pages to cache
-                this.cacheOrder = []; // To keep track of cache order for LRU
                 this.init();
             }
 
@@ -242,12 +239,12 @@
                     return;
                 }
 
+                // Retrieve saved page from sessionStorage for better performance (avoids bloating localStorage)
+                const savedPage = parseInt(sessionStorage.getItem('currentPage'), 10);
+                this.currentPage = isNaN(savedPage) ? 1 : savedPage;
+
                 // Calculate total pages
                 this.totalPages = Math.ceil(this.imageData.length / this.imagesPerPage);
-
-                // Ensure currentPage is within valid range
-                if (this.currentPage < 1) this.currentPage = 1;
-                if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
 
                 // Setup pagination
                 this.pagination = new PaginationButton(this.totalPages, 7, this.currentPage, this.handlePageChange.bind(this));
@@ -281,20 +278,37 @@
             }
 
             /**
-             * Creates an HTML string for a single image item.
+             * Creates a single image container element with image and caption.
              * Implements lazy loading using Intersection Observer.
              * @param {Object} imageInfo - Object containing image details (src, caption, link).
-             * @returns {string} - The HTML string for the image item.
+             * @returns {HTMLElement} - The complete image container element.
              */
-            createImageHTML(imageInfo) {
-                return `
-                    <div class="image-item">
-                        <a href="${imageInfo.link}" target="_blank" rel="noopener noreferrer" aria-label="${imageInfo.caption}">
-                            <img class="lazy-image" data-src="${imageInfo.src}" alt="${imageInfo.caption}" src="images/placeholder.svg" loading="lazy">
-                            <p class="image-caption">${imageInfo.caption}</p>
-                        </a>
-                    </div>
-                `;
+            createImage(imageInfo) {
+                const div = document.createElement('div');
+                div.className = 'image-item';
+                
+                const link = document.createElement('a');
+                link.href = imageInfo.link;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.setAttribute('aria-label', imageInfo.caption);
+
+                const img = document.createElement('img');
+                img.dataset.src = imageInfo.src; // Store actual image URL in data-src
+                img.alt = imageInfo.caption;
+                img.src = 'images/placeholder.svg'; // Placeholder image
+                img.classList.add('lazy-image'); // For Intersection Observer
+                img.setAttribute('loading', 'lazy'); // Native lazy loading as a fallback
+
+                const caption = document.createElement('p');
+                caption.className = 'image-caption';
+                caption.textContent = imageInfo.caption;
+
+                link.appendChild(img);
+                link.appendChild(caption);
+                div.appendChild(link);
+                
+                return div;
             }
 
             /**
@@ -304,6 +318,12 @@
                 const lazyImages = this.imageContainer.querySelectorAll('img.lazy-image');
 
                 if ('IntersectionObserver' in window) {
+                    // If an existing observer exists, disconnect it to prevent multiple observers
+                    if (this.observer) {
+                        this.observer.disconnect();
+                        this.observer = null;
+                    }
+
                     this.observer = new IntersectionObserver((entries, observer) => {
                         entries.forEach(entry => {
                             if (entry.isIntersecting) {
@@ -333,37 +353,23 @@
 
             /**
              * Loads and displays the images for a specific page.
-             * Utilizes caching to retain previous pages' data.
              * @param {number} page - The page number to load.
              */
             loadPage(page) {
-                console.log(`Loading page: ${page}`);
+                // Clear existing images and disconnect observer
+                this.clearImages();
 
-                // Check if the page is already cached
-                if (this.pageCache[page]) {
-                    console.log(`Page ${page} loaded from cache.`);
-                    this.renderPage(this.pageCache[page]);
-                } else {
-                    console.log(`Page ${page} not in cache. Rendering and caching.`);
-                    // If not cached, create page content
-                    let pageHTML = '';
-
-                    const start = (page - 1) * this.imagesPerPage;
-                    const end = Math.min(start + this.imagesPerPage, this.imageData.length);
-
-                    for (let i = start; i < end; i++) {
-                        pageHTML += this.createImageHTML(this.imageData[i]);
-                    }
-
-                    // Cache the created page
-                    this.cachePage(page, pageHTML);
-
-                    // Render the newly created page
-                    this.renderPage(pageHTML);
-                }
-
-                // Update currentPage
                 this.currentPage = page;
+                const container = this.imageContainer;
+                container.innerHTML = ''; // Clear the container
+
+                const start = (page - 1) * this.imagesPerPage;
+                const end = Math.min(start + this.imagesPerPage, this.imageData.length);
+
+                for (let i = start; i < end; i++) {
+                    const imageElement = this.createImage(this.imageData[i]);
+                    container.appendChild(imageElement);
+                }
 
                 // Setup lazy loading for the new images
                 this.setupLazyLoading();
@@ -371,40 +377,11 @@
                 // Scroll to the top of the image container for better user experience
                 this.scrollToTop();
 
+                // Update sessionStorage
+                sessionStorage.setItem('currentPage', page);
+
                 // Update pagination UI
                 this.pagination.update(this.currentPage);
-            }
-
-            /**
-             * Renders the page content into the image container.
-             * @param {string} pageHTML - The HTML string to render.
-             */
-            renderPage(pageHTML) {
-                // Clear existing images and disconnect observer
-                this.clearImages();
-
-                // Inject the new page's HTML
-                this.imageContainer.innerHTML = pageHTML;
-            }
-
-            /**
-             * Caches a page's content as an HTML string.
-             * Implements a Least Recently Used (LRU) cache strategy.
-             * @param {number} page - The page number.
-             * @param {string} html - The HTML string to cache.
-             */
-            cachePage(page, html) {
-                // If cache is full, remove the least recently used page
-                if (this.cacheOrder.length >= this.maxCacheSize) {
-                    const oldestPage = this.cacheOrder.shift();
-                    console.log(`Cache full. Removing oldest page: ${oldestPage}`);
-                    delete this.pageCache[oldestPage];
-                }
-
-                // Add the new page to the cache
-                this.pageCache[page] = html;
-                this.cacheOrder.push(page);
-                console.log(`Page ${page} cached. Current cache size: ${this.cacheOrder.length}`);
             }
 
             /**
@@ -432,7 +409,6 @@
              * Performs cleanup by disconnecting observers and removing event listeners.
              */
             cleanup() {
-                console.log('Cleaning up resources.');
                 // Disconnect the IntersectionObserver
                 if (this.observer) {
                     this.observer.disconnect();
@@ -445,6 +421,7 @@
                 // Clear pagination container
                 if (this.pagination) {
                     this.pagination.destroy();
+                    this.pagination = null;
                 }
 
                 // Remove event listeners
@@ -496,6 +473,11 @@
              * @param {HTMLElement} container - The container to render the buttons into.
              */
             render(container) {
+                // If there's an existing container, destroy it to prevent duplicate listeners
+                if (this.paginationButtonContainer) {
+                    this.destroy();
+                }
+
                 this.paginationButtonContainer = document.createElement('nav');
                 this.paginationButtonContainer.className = 'pagination-buttons';
                 this.paginationButtonContainer.setAttribute('aria-label', 'Pagination');
@@ -625,7 +607,6 @@
         function initGallery() {
             if (typeof imageData === 'undefined' || !Array.isArray(imageData)) {
                 console.error('imageData is not defined or is not an array.');
-                displayErrorMessage();
                 return;
             }
 
@@ -634,21 +615,8 @@
                 currentPage: 1,
                 imageData: imageData, // Loaded from imageData.js
                 imageContainerId: 'image-container',
-                paginationContainerId: 'pagination-container',
-                maxCacheSize: 10 // Adjust based on memory constraints
+                paginationContainerId: 'pagination-container'
             });
-        }
-
-        /**
-         * Displays an error message on the webpage.
-         */
-        function displayErrorMessage() {
-            const imageContainer = document.getElementById('image-container');
-            const message = document.createElement('p');
-            message.textContent = 'Failed to load image data.';
-            message.style.fontSize = '18px';
-            message.style.color = 'var(--text-color)';
-            imageContainer.appendChild(message);
         }
 
         // Initialize the gallery when the window is loaded
