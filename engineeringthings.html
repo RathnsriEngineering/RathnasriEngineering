@@ -84,6 +84,7 @@
             height: auto;
             object-fit: cover;
             transition: filter 0.3s;
+            loading: lazy; /* Native lazy loading as a fallback */
         }
 
         .image-caption {
@@ -227,6 +228,7 @@
                 this.paginationContainer = document.getElementById(options.paginationContainerId);
                 this.observer = null; // IntersectionObserver instance
                 this.pagination = null; // PaginationButton instance
+                this.scrollPositionKey = 'galleryScrollPosition';
                 this.init();
             }
 
@@ -239,7 +241,7 @@
                     return;
                 }
 
-                // Retrieve saved page from sessionStorage for better performance (avoids bloating localStorage)
+                // Retrieve saved page from sessionStorage
                 const savedPage = parseInt(sessionStorage.getItem('currentPage'), 10);
                 this.currentPage = isNaN(savedPage) ? 1 : savedPage;
 
@@ -252,6 +254,12 @@
 
                 // Load initial page
                 this.loadPage(this.currentPage);
+
+                // Restore scroll position if available
+                const savedScroll = sessionStorage.getItem(this.scrollPositionKey);
+                if (savedScroll) {
+                    window.scrollTo(0, parseInt(savedScroll, 10));
+                }
 
                 // Setup cleanup on page unload
                 this.boundCleanup = this.cleanup.bind(this);
@@ -318,7 +326,7 @@
                 const lazyImages = this.imageContainer.querySelectorAll('img.lazy-image');
 
                 if ('IntersectionObserver' in window) {
-                    // If an existing observer exists, disconnect it to prevent multiple observers
+                    // Disconnect existing observer if any
                     if (this.observer) {
                         this.observer.disconnect();
                         this.observer = null;
@@ -356,6 +364,9 @@
              * @param {number} page - The page number to load.
              */
             loadPage(page) {
+                // Save current scroll position before changing the page
+                sessionStorage.setItem(this.scrollPositionKey, window.scrollY);
+
                 // Clear existing images and disconnect observer
                 this.clearImages();
 
@@ -374,10 +385,13 @@
                 // Setup lazy loading for the new images
                 this.setupLazyLoading();
 
-                // Scroll to the top of the image container for better user experience
-                this.scrollToTop();
+                // Restore scroll position if returning to a previously saved state
+                // Note: If navigating back, the browser may handle scroll restoration automatically
+                // Hence, we avoid forcing scroll to top
+                // If needed, uncomment the following line to scroll to top
+                // this.scrollToTop();
 
-                // Update sessionStorage
+                // Update sessionStorage with the current page
                 sessionStorage.setItem('currentPage', page);
 
                 // Update pagination UI
@@ -423,6 +437,9 @@
                     this.pagination.destroy();
                     this.pagination = null;
                 }
+
+                // Save current scroll position
+                sessionStorage.setItem(this.scrollPositionKey, window.scrollY);
 
                 // Remove event listeners
                 window.removeEventListener('beforeunload', this.boundCleanup);
