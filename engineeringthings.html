@@ -281,7 +281,7 @@
             }
 
             /**
-             * Creates a single image container element with image and caption.
+             * Creates an HTML string for a single image item.
              * Implements lazy loading using Intersection Observer.
              * @param {Object} imageInfo - Object containing image details (src, caption, link).
              * @returns {string} - The HTML string for the image item.
@@ -337,11 +337,14 @@
              * @param {number} page - The page number to load.
              */
             loadPage(page) {
+                console.log(`Loading page: ${page}`);
+
                 // Check if the page is already cached
                 if (this.pageCache[page]) {
-                    // If cached, render from cache
+                    console.log(`Page ${page} loaded from cache.`);
                     this.renderPage(this.pageCache[page]);
                 } else {
+                    console.log(`Page ${page} not in cache. Rendering and caching.`);
                     // If not cached, create page content
                     let pageHTML = '';
 
@@ -394,12 +397,14 @@
                 // If cache is full, remove the least recently used page
                 if (this.cacheOrder.length >= this.maxCacheSize) {
                     const oldestPage = this.cacheOrder.shift();
+                    console.log(`Cache full. Removing oldest page: ${oldestPage}`);
                     delete this.pageCache[oldestPage];
                 }
 
                 // Add the new page to the cache
                 this.pageCache[page] = html;
                 this.cacheOrder.push(page);
+                console.log(`Page ${page} cached. Current cache size: ${this.cacheOrder.length}`);
             }
 
             /**
@@ -427,6 +432,7 @@
              * Performs cleanup by disconnecting observers and removing event listeners.
              */
             cleanup() {
+                console.log('Cleaning up resources.');
                 // Disconnect the IntersectionObserver
                 if (this.observer) {
                     this.observer.disconnect();
