@@ -9,17 +9,34 @@
     <link rel="icon" href="images/logo.png" type="image/png">
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
 
     <!-- CSS Styles -->
     <style>
+        /* CSS Variables for Consistent Theming */
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #f4f4f4;
+            --border-color: #ddd;
+            --text-color: #333;
+            --disabled-color: #cccccc;
+            --font-family: 'Roboto', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            font-family: 'Roboto', sans-serif;
+            font-family: var(--font-family);
+            background-color: #fff;
+            color: var(--text-color);
         }
 
         /* Container for images */
@@ -27,26 +44,32 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 20px;
-            max-width: 100%;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 10px;
         }
 
-        .image-container {
+        .image-item {
             padding: 10px;
             margin: 5px;
-            background-color: #f4f4f4;
-            border: 1px solid #ddd;
+            background-color: var(--secondary-color);
+            border: 1px solid var(--border-color);
             text-align: center;
             width: 300px;
             height: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-sizing: border-box;
+            transition: box-shadow 0.3s;
+        }
+
+        .image-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         /* Ensure image and caption within the link are aligned */
-        .image-container a {
+        .image-item a {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -56,7 +79,7 @@
             width: 100%;
         }
 
-        .image-container img {
+        .image-item img {
             width: 100%;
             height: auto;
             object-fit: cover;
@@ -64,9 +87,9 @@
         }
 
         .image-caption {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 18px;
-            color: #333;
+            color: var(--text-color);
             flex-grow: 1;
         }
 
@@ -75,30 +98,34 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 20px;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 10px;
         }
 
         .page-btn {
             padding: 10px 15px;
             margin: 5px;
-            background-color: #007bff;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-family: 'Roboto', sans-serif;
+            font-family: var(--font-family);
+            transition: background-color 0.3s;
         }
 
         .page-btn.active {
-            background-color: #0056b3;
+            background-color: var(--primary-dark);
         }
 
-        .page-btn:hover {
-            background-color: #0056b3;
+        .page-btn:hover:not(:disabled) {
+            background-color: var(--primary-dark);
         }
 
         .page-btn:disabled {
-            background-color: #cccccc;
+            background-color: var(--disabled-color);
             cursor: not-allowed;
         }
 
@@ -114,10 +141,10 @@
         /* Responsive Styles for Tablets */
         @media (max-width: 768px) {
             #image-container {
-                margin-top: 10px;
+                margin: 10px 0;
             }
 
-            .image-container {
+            .image-item {
                 width: 220px;
                 height: auto;
             }
@@ -127,18 +154,19 @@
             }
 
             .pagination-buttons {
-                margin-top: 10px;
+                margin: 10px 0;
             }
 
             .page-btn {
                 padding: 8px 12px;
                 margin: 3px;
+                font-size: 14px;
             }
         }
 
         /* Responsive Styles for Smartphones */
         @media (max-width: 480px) {
-            .image-container {
+            .image-item {
                 width: 160px;
                 height: auto;
             }
@@ -150,28 +178,31 @@
             .page-btn {
                 padding: 5px 8px;
                 margin: 2px;
+                font-size: 12px;
             }
 
             .pagination-buttons {
-                margin-top: 5px;
+                margin: 5px 0;
                 flex-wrap: nowrap;
                 overflow-x: auto;
             }
 
             .pagination-buttons .page-btn {
                 min-width: 40px;
-                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- Container for images -->
-    <div id="image-container"></div>
+    <!-- Main Content -->
+    <main>
+        <!-- Container for images -->
+        <div id="image-container" aria-label="Image Gallery"></div>
 
-    <!-- Container for pagination buttons -->
-    <div id="pagination-container"></div>
+        <!-- Container for pagination buttons -->
+        <div id="pagination-container" aria-label="Pagination Navigation"></div>
+    </main>
 
     <!-- Load image data from external JavaScript -->
     <script src="imageData.js"></script>
@@ -202,6 +233,11 @@
              * Initializes the gallery by setting up pagination and loading the initial page.
              */
             init() {
+                if (!Array.isArray(this.imageData) || this.imageData.length === 0) {
+                    this.displayNoImagesMessage();
+                    return;
+                }
+
                 // Retrieve saved page from localStorage
                 const savedPage = parseInt(localStorage.getItem('currentPage'), 10);
                 this.currentPage = isNaN(savedPage) ? 1 : savedPage;
@@ -210,14 +246,26 @@
                 this.totalPages = Math.ceil(this.imageData.length / this.imagesPerPage);
 
                 // Setup pagination
-                this.pagination = new PaginationButton(this.totalPages, 15, this.currentPage, this.handlePageChange.bind(this));
+                this.pagination = new PaginationButton(this.totalPages, 7, this.currentPage, this.handlePageChange.bind(this));
                 this.pagination.render(this.paginationContainer);
 
                 // Load initial page
                 this.loadPage(this.currentPage);
 
                 // Setup cleanup on page unload
-                window.addEventListener('beforeunload', this.cleanup.bind(this));
+                this.boundCleanup = this.cleanup.bind(this);
+                window.addEventListener('beforeunload', this.boundCleanup);
+            }
+
+            /**
+             * Displays a message when there are no images to show.
+             */
+            displayNoImagesMessage() {
+                const message = document.createElement('p');
+                message.textContent = 'No images available to display.';
+                message.style.fontSize = '18px';
+                message.style.color = 'var(--text-color)';
+                this.imageContainer.appendChild(message);
             }
 
             /**
@@ -236,22 +284,24 @@
              */
             createImage(imageInfo) {
                 const div = document.createElement('div');
-                div.className = 'image-container';
+                div.className = 'image-item';
                 
                 const link = document.createElement('a');
                 link.href = imageInfo.link;
                 link.target = '_blank';
-                
+                link.rel = 'noopener noreferrer';
+                link.setAttribute('aria-label', imageInfo.caption);
+
                 const img = document.createElement('img');
                 img.dataset.src = imageInfo.src; // Store actual image URL in data-src
                 img.alt = imageInfo.caption;
                 img.src = 'images/placeholder.png'; // Placeholder image
                 img.classList.add('lazy-image'); // For Intersection Observer
-                
+
                 const caption = document.createElement('p');
                 caption.className = 'image-caption';
                 caption.textContent = imageInfo.caption;
-                
+
                 link.appendChild(img);
                 link.appendChild(caption);
                 div.appendChild(link);
@@ -344,11 +394,7 @@
                 }
 
                 // Remove all child elements from the image container
-                while (this.imageContainer.firstChild) {
-                    // If any event listeners are attached to child elements, remove them here
-                    // Currently, no event listeners are attached, so simply remove the child
-                    this.imageContainer.removeChild(this.imageContainer.firstChild);
-                }
+                this.imageContainer.innerHTML = '';
             }
 
             /**
@@ -369,8 +415,8 @@
                     this.pagination.destroy();
                 }
 
-                // Remove event listeners if any
-                window.removeEventListener('beforeunload', this.cleanup.bind(this));
+                // Remove event listeners
+                window.removeEventListener('beforeunload', this.boundCleanup);
             }
         }
 
@@ -386,7 +432,7 @@
              * @param {number} currentPage - Current active page.
              * @param {Function} onPageChange - Callback function when a page is changed.
              */
-            constructor(totalPages, maxPagesVisible = 15, currentPage = 1, onPageChange) {
+            constructor(totalPages, maxPagesVisible = 7, currentPage = 1, onPageChange) {
                 this.totalPages = totalPages;
                 this.maxPagesVisible = maxPagesVisible;
                 this.currentPage = currentPage;
@@ -402,12 +448,14 @@
              * @param {Function} handleClick - Click event handler.
              * @returns {HTMLElement} - The button element.
              */
-            createButton(label, cls, disabled, handleClick) {
+            createButton(label, cls = '', disabled = false, handleClick = null) {
                 const button = document.createElement('button');
                 button.textContent = label;
                 button.className = `page-btn ${cls}`;
                 button.disabled = disabled;
-                button.addEventListener('click', handleClick);
+                if (handleClick) {
+                    button.addEventListener('click', handleClick);
+                }
                 return button;
             }
 
@@ -416,11 +464,13 @@
              * @param {HTMLElement} container - The container to render the buttons into.
              */
             render(container) {
-                this.paginationButtonContainer = document.createElement('div');
+                this.paginationButtonContainer = document.createElement('nav');
                 this.paginationButtonContainer.className = 'pagination-buttons';
+                this.paginationButtonContainer.setAttribute('aria-label', 'Pagination');
 
                 this.renderButtons();
 
+                container.innerHTML = ''; // Clear existing content
                 container.appendChild(this.paginationButtonContainer);
             }
 
@@ -443,7 +493,7 @@
                 this.paginationButtonContainer.innerHTML = '';
 
                 // Start button
-                const startButton = this.createButton('Start', 'start-page', this.currentPage === 1, () => {
+                const startButton = this.createButton('First', '', this.currentPage === 1, () => {
                     if (this.currentPage !== 1) {
                         this.onPageChange(1);
                     }
@@ -451,18 +501,19 @@
                 this.paginationButtonContainer.appendChild(startButton);
 
                 // Previous button
-                const prevButton = this.createButton('Prev', 'prev-page', this.currentPage === 1, () => {
+                const prevButton = this.createButton('Prev', '', this.currentPage === 1, () => {
                     if (this.currentPage > 1) {
                         this.onPageChange(this.currentPage - 1);
                     }
                 });
                 this.paginationButtonContainer.appendChild(prevButton);
 
-                // Display range of page buttons
+                // Determine the range of page buttons to display
                 let startPage = Math.max(1, this.currentPage - Math.floor(this.maxPagesVisible / 2));
-                let endPage = Math.min(this.totalPages, startPage + this.maxPagesVisible - 1);
+                let endPage = startPage + this.maxPagesVisible - 1;
 
-                if (endPage - startPage + 1 < this.maxPagesVisible) {
+                if (endPage > this.totalPages) {
+                    endPage = this.totalPages;
                     startPage = Math.max(1, endPage - this.maxPagesVisible + 1);
                 }
 
@@ -476,7 +527,7 @@
                 }
 
                 // Next button
-                const nextButton = this.createButton('Next', 'next-page', this.currentPage === this.totalPages, () => {
+                const nextButton = this.createButton('Next', '', this.currentPage === this.totalPages, () => {
                     if (this.currentPage < this.totalPages) {
                         this.onPageChange(this.currentPage + 1);
                     }
@@ -484,7 +535,7 @@
                 this.paginationButtonContainer.appendChild(nextButton);
 
                 // End button
-                const endButton = this.createButton('End', 'end-page', this.currentPage === this.totalPages, () => {
+                const endButton = this.createButton('Last', '', this.currentPage === this.totalPages, () => {
                     if (this.currentPage !== this.totalPages) {
                         this.onPageChange(this.totalPages);
                     }
@@ -505,9 +556,7 @@
                     });
 
                     // Remove the container from the DOM
-                    if (this.paginationButtonContainer.parentNode) {
-                        this.paginationButtonContainer.parentNode.removeChild(this.paginationButtonContainer);
-                    }
+                    this.paginationButtonContainer.remove();
                     this.paginationButtonContainer = null;
                 }
             }
@@ -517,7 +566,12 @@
          * Initializes the gallery once the window has loaded.
          */
         function initGallery() {
-            const gallery = new Gallery({
+            if (typeof imageData === 'undefined' || !Array.isArray(imageData)) {
+                console.error('imageData is not defined or is not an array.');
+                return;
+            }
+
+            new Gallery({
                 imagesPerPage: 12,
                 currentPage: 1,
                 imageData: imageData, // Assuming imageData is loaded from imageData.js
