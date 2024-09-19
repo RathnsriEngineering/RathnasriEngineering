@@ -227,6 +227,9 @@
                 this.paginationContainer = document.getElementById(options.paginationContainerId);
                 this.observer = null; // IntersectionObserver instance
                 this.pagination = null; // PaginationButton instance
+                this.pageCache = {}; // Cache for storing loaded pages
+                this.maxCacheSize = options.maxCacheSize || 5; // Maximum number of pages to cache
+                this.cacheOrder = []; // To keep track of cache order for LRU
                 this.init();
             }
 
@@ -239,12 +242,12 @@
                     return;
                 }
 
-                // Retrieve saved page from sessionStorage for better performance (avoids bloating localStorage)
-                const savedPage = parseInt(sessionStorage.getItem('currentPage'), 10);
-                this.currentPage = isNaN(savedPage) ? 1 : savedPage;
-
                 // Calculate total pages
                 this.totalPages = Math.ceil(this.imageData.length / this.imagesPerPage);
+
+                // Ensure currentPage is within valid range
+                if (this.currentPage < 1) this.currentPage = 1;
+                if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
 
                 // Setup pagination
                 this.pagination = new PaginationButton(this.totalPages, 7, this.currentPage, this.handlePageChange.bind(this));
@@ -347,23 +350,35 @@
 
             /**
              * Loads and displays the images for a specific page.
+             * Utilizes caching to retain previous pages' data.
              * @param {number} page - The page number to load.
              */
             loadPage(page) {
-                // Clear existing images and disconnect observer
-                this.clearImages();
+                // Check if the page is already cached
+                if (this.pageCache[page]) {
+                    // If cached, render from cache
+                    this.renderPage(this.pageCache[page]);
+                } else {
+                    // If not cached, create page content
+                    const container = document.createDocumentFragment(); // Use DocumentFragment for performance
 
-                this.currentPage = page;
-                const container = this.imageContainer;
-                container.innerHTML = ''; // Clear the container
+                    const start = (page - 1) * this.imagesPerPage;
+                    const end = Math.min(start + this.imagesPerPage, this.imageData.length);
 
-                const start = (page - 1) * this.imagesPerPage;
-                const end = Math.min(start + this.imagesPerPage, this.imageData.length);
+                    for (let i = start; i < end; i++) {
+                        const imageElement = this.createImage(this.imageData[i]);
+                        container.appendChild(imageElement);
+                    }
 
-                for (let i = start; i < end; i++) {
-                    const imageElement = this.createImage(this.imageData[i]);
-                    container.appendChild(imageElement);
+                    // Cache the created page
+                    this.cachePage(page, container.cloneNode(true));
+
+                    // Render the newly created page
+                    this.renderPage(container);
                 }
+
+                // Update currentPage
+                this.currentPage = page;
 
                 // Setup lazy loading for the new images
                 this.setupLazyLoading();
@@ -371,11 +386,38 @@
                 // Scroll to the top of the image container for better user experience
                 this.scrollToTop();
 
-                // Update sessionStorage
-                sessionStorage.setItem('currentPage', page);
-
                 // Update pagination UI
                 this.pagination.update(this.currentPage);
+            }
+
+            /**
+             * Renders the page content into the image container.
+             * @param {DocumentFragment} pageContent - The content to render.
+             */
+            renderPage(pageContent) {
+                // Clear existing images and disconnect observer
+                this.clearImages();
+
+                // Append the new page content
+                this.imageContainer.appendChild(pageContent);
+            }
+
+            /**
+             * Caches a page's content.
+             * Implements a Least Recently Used (LRU) cache strategy.
+             * @param {number} page - The page number.
+             * @param {DocumentFragment} content - The content to cache.
+             */
+            cachePage(page, content) {
+                // If cache is full, remove the least recently used page
+                if (this.cacheOrder.length >= this.maxCacheSize) {
+                    const oldestPage = this.cacheOrder.shift();
+                    delete this.pageCache[oldestPage];
+                }
+
+                // Add the new page to the cache
+                this.pageCache[page] = content;
+                this.cacheOrder.push(page);
             }
 
             /**
@@ -603,7 +645,8 @@
                 currentPage: 1,
                 imageData: imageData, // Loaded from imageData.js
                 imageContainerId: 'image-container',
-                paginationContainerId: 'pagination-container'
+                paginationContainerId: 'pagination-container',
+                maxCacheSize: 10 // Adjust based on memory constraints
             });
         }
 
