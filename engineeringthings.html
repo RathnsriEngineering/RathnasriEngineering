@@ -227,7 +227,7 @@
                 this.paginationContainer = document.getElementById(options.paginationContainerId);
                 this.observer = null; // IntersectionObserver instance
                 this.pagination = null; // PaginationButton instance
-                this.pageCache = {}; // Cache for storing loaded pages
+                this.pageCache = {}; // Cache for storing loaded pages as HTML strings
                 this.maxCacheSize = options.maxCacheSize || 5; // Maximum number of pages to cache
                 this.cacheOrder = []; // To keep track of cache order for LRU
                 this.init();
@@ -284,34 +284,17 @@
              * Creates a single image container element with image and caption.
              * Implements lazy loading using Intersection Observer.
              * @param {Object} imageInfo - Object containing image details (src, caption, link).
-             * @returns {HTMLElement} - The complete image container element.
+             * @returns {string} - The HTML string for the image item.
              */
-            createImage(imageInfo) {
-                const div = document.createElement('div');
-                div.className = 'image-item';
-                
-                const link = document.createElement('a');
-                link.href = imageInfo.link;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                link.setAttribute('aria-label', imageInfo.caption);
-
-                const img = document.createElement('img');
-                img.dataset.src = imageInfo.src; // Store actual image URL in data-src
-                img.alt = imageInfo.caption;
-                img.src = 'images/placeholder.svg'; // Placeholder image
-                img.classList.add('lazy-image'); // For Intersection Observer
-                img.setAttribute('loading', 'lazy'); // Add lazy loading
-
-                const caption = document.createElement('p');
-                caption.className = 'image-caption';
-                caption.textContent = imageInfo.caption;
-
-                link.appendChild(img);
-                link.appendChild(caption);
-                div.appendChild(link);
-                
-                return div;
+            createImageHTML(imageInfo) {
+                return `
+                    <div class="image-item">
+                        <a href="${imageInfo.link}" target="_blank" rel="noopener noreferrer" aria-label="${imageInfo.caption}">
+                            <img class="lazy-image" data-src="${imageInfo.src}" alt="${imageInfo.caption}" src="images/placeholder.svg" loading="lazy">
+                            <p class="image-caption">${imageInfo.caption}</p>
+                        </a>
+                    </div>
+                `;
             }
 
             /**
@@ -360,21 +343,20 @@
                     this.renderPage(this.pageCache[page]);
                 } else {
                     // If not cached, create page content
-                    const container = document.createDocumentFragment(); // Use DocumentFragment for performance
+                    let pageHTML = '';
 
                     const start = (page - 1) * this.imagesPerPage;
                     const end = Math.min(start + this.imagesPerPage, this.imageData.length);
 
                     for (let i = start; i < end; i++) {
-                        const imageElement = this.createImage(this.imageData[i]);
-                        container.appendChild(imageElement);
+                        pageHTML += this.createImageHTML(this.imageData[i]);
                     }
 
                     // Cache the created page
-                    this.cachePage(page, container.cloneNode(true));
+                    this.cachePage(page, pageHTML);
 
                     // Render the newly created page
-                    this.renderPage(container);
+                    this.renderPage(pageHTML);
                 }
 
                 // Update currentPage
@@ -392,23 +374,23 @@
 
             /**
              * Renders the page content into the image container.
-             * @param {DocumentFragment} pageContent - The content to render.
+             * @param {string} pageHTML - The HTML string to render.
              */
-            renderPage(pageContent) {
+            renderPage(pageHTML) {
                 // Clear existing images and disconnect observer
                 this.clearImages();
 
-                // Append the new page content
-                this.imageContainer.appendChild(pageContent);
+                // Inject the new page's HTML
+                this.imageContainer.innerHTML = pageHTML;
             }
 
             /**
-             * Caches a page's content.
+             * Caches a page's content as an HTML string.
              * Implements a Least Recently Used (LRU) cache strategy.
              * @param {number} page - The page number.
-             * @param {DocumentFragment} content - The content to cache.
+             * @param {string} html - The HTML string to cache.
              */
-            cachePage(page, content) {
+            cachePage(page, html) {
                 // If cache is full, remove the least recently used page
                 if (this.cacheOrder.length >= this.maxCacheSize) {
                     const oldestPage = this.cacheOrder.shift();
@@ -416,7 +398,7 @@
                 }
 
                 // Add the new page to the cache
-                this.pageCache[page] = content;
+                this.pageCache[page] = html;
                 this.cacheOrder.push(page);
             }
 
@@ -637,6 +619,7 @@
         function initGallery() {
             if (typeof imageData === 'undefined' || !Array.isArray(imageData)) {
                 console.error('imageData is not defined or is not an array.');
+                displayErrorMessage();
                 return;
             }
 
@@ -648,6 +631,18 @@
                 paginationContainerId: 'pagination-container',
                 maxCacheSize: 10 // Adjust based on memory constraints
             });
+        }
+
+        /**
+         * Displays an error message on the webpage.
+         */
+        function displayErrorMessage() {
+            const imageContainer = document.getElementById('image-container');
+            const message = document.createElement('p');
+            message.textContent = 'Failed to load image data.';
+            message.style.fontSize = '18px';
+            message.style.color = 'var(--text-color)';
+            imageContainer.appendChild(message);
         }
 
         // Initialize the gallery when the window is loaded
