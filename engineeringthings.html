@@ -38,7 +38,7 @@
             border: 1px solid #ddd;
             text-align: center;
             width: 300px;
-            height: 500px;
+            height: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -60,6 +60,7 @@
             width: 100%;
             height: auto;
             object-fit: cover;
+            transition: filter 0.3s;
         }
 
         .image-caption {
@@ -99,6 +100,15 @@
         .page-btn:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
+        }
+
+        /* Optional: Style for lazy-loaded images */
+        .lazy-image {
+            filter: blur(10px);
+        }
+
+        img:not(.lazy-image) {
+            filter: none;
         }
 
         /* Responsive Styles for Tablets */
@@ -168,150 +178,356 @@
     
     <!-- Main Script -->
     <script>
-        const imagesPerPage = 12;  // Number of images to display per page
-        let currentPage = 1;       // Current page
-
         /**
-         * Creates a single image container element with image and caption.
-         * @param {Object} imageInfo - Object containing image details (src, caption, link).
-         * @returns {HTMLElement} - The complete image container element.
+         * Gallery Class
+         * Manages image loading, pagination, lazy loading, and memory cleanup.
          */
-        function createImage(imageInfo) {
-            const div = document.createElement('div');
-            div.className = 'image-container';
-            
-            const link = document.createElement('a');
-            link.href = imageInfo.link;
-            link.target = '_blank';
-            
-            const img = document.createElement('img');
-            img.src = imageInfo.src;
-            img.alt = imageInfo.caption;
-            
-            const caption = document.createElement('p');
-            caption.className = 'image-caption';
-            caption.textContent = imageInfo.caption;
-            
-            link.appendChild(img);
-            link.appendChild(caption);
-            div.appendChild(link);
-            
-            return div;
-        }
-
-        /**
-         * Loads and displays the images for a specific page.
-         * @param {number} page - The page number to load.
-         */
-        function loadPage(page) {
-            const container = document.getElementById('image-container');
-            container.innerHTML = '';  // Clear the previous content
-            
-            const start = (page - 1) * imagesPerPage;
-            const end = Math.min(start + imagesPerPage, imageData.length);
-
-            for (let i = start; i < end; i++) {
-                container.appendChild(createImage(imageData[i]));
+        class Gallery {
+            /**
+             * Constructor for the Gallery class.
+             * @param {Object} options - Configuration options for the gallery.
+             */
+            constructor(options) {
+                this.imagesPerPage = options.imagesPerPage || 12;
+                this.currentPage = options.currentPage || 1;
+                this.imageData = options.imageData || [];
+                this.imageContainer = document.getElementById(options.imageContainerId);
+                this.paginationContainer = document.getElementById(options.paginationContainerId);
+                this.observer = null; // IntersectionObserver instance
+                this.pagination = null; // PaginationButton instance
+                this.init();
             }
 
-            // Store the current page in localStorage
-            localStorage.setItem('currentPage', page);
+            /**
+             * Initializes the gallery by setting up pagination and loading the initial page.
+             */
+            init() {
+                // Retrieve saved page from localStorage
+                const savedPage = parseInt(localStorage.getItem('currentPage'), 10);
+                this.currentPage = isNaN(savedPage) ? 1 : savedPage;
+
+                // Calculate total pages
+                this.totalPages = Math.ceil(this.imageData.length / this.imagesPerPage);
+
+                // Setup pagination
+                this.pagination = new PaginationButton(this.totalPages, 15, this.currentPage, this.handlePageChange.bind(this));
+                this.pagination.render(this.paginationContainer);
+
+                // Load initial page
+                this.loadPage(this.currentPage);
+
+                // Setup cleanup on page unload
+                window.addEventListener('beforeunload', this.cleanup.bind(this));
+            }
+
+            /**
+             * Handles page changes from the pagination buttons.
+             * @param {number} newPage - The new page number to load.
+             */
+            handlePageChange(newPage) {
+                this.loadPage(newPage);
+            }
+
+            /**
+             * Creates a single image container element with image and caption.
+             * Implements lazy loading using Intersection Observer.
+             * @param {Object} imageInfo - Object containing image details (src, caption, link).
+             * @returns {HTMLElement} - The complete image container element.
+             */
+            createImage(imageInfo) {
+                const div = document.createElement('div');
+                div.className = 'image-container';
+                
+                const link = document.createElement('a');
+                link.href = imageInfo.link;
+                link.target = '_blank';
+                
+                const img = document.createElement('img');
+                img.dataset.src = imageInfo.src; // Store actual image URL in data-src
+                img.alt = imageInfo.caption;
+                img.src = 'images/placeholder.png'; // Placeholder image
+                img.classList.add('lazy-image'); // For Intersection Observer
+                
+                const caption = document.createElement('p');
+                caption.className = 'image-caption';
+                caption.textContent = imageInfo.caption;
+                
+                link.appendChild(img);
+                link.appendChild(caption);
+                div.appendChild(link);
+                
+                return div;
+            }
+
+            /**
+             * Sets up Intersection Observer to lazy load images.
+             */
+            setupLazyLoading() {
+                const lazyImages = this.imageContainer.querySelectorAll('img.lazy-image');
+
+                if ('IntersectionObserver' in window) {
+                    this.observer = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                img.src = img.dataset.src;
+                                img.classList.remove('lazy-image');
+                                observer.unobserve(img);
+                            }
+                        });
+                    }, {
+                        root: null, // viewport
+                        rootMargin: '0px',
+                        threshold: 0.1 // 10% visibility
+                    });
+
+                    lazyImages.forEach(img => {
+                        this.observer.observe(img);
+                    });
+                } else {
+                    // Fallback: Load all images immediately
+                    lazyImages.forEach(img => {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy-image');
+                    });
+                }
+            }
+
+            /**
+             * Loads and displays the images for a specific page.
+             * @param {number} page - The page number to load.
+             */
+            loadPage(page) {
+                // Clear existing images and disconnect observer
+                this.clearImages();
+
+                this.currentPage = page;
+                const container = this.imageContainer;
+                container.innerHTML = ''; // Clear the container
+
+                const start = (page - 1) * this.imagesPerPage;
+                const end = Math.min(start + this.imagesPerPage, this.imageData.length);
+
+                for (let i = start; i < end; i++) {
+                    const imageElement = this.createImage(this.imageData[i]);
+                    container.appendChild(imageElement);
+                }
+
+                // Setup lazy loading for the new images
+                this.setupLazyLoading();
+
+                // Scroll to the top of the image container for better user experience
+                this.scrollToTop();
+
+                // Update localStorage
+                localStorage.setItem('currentPage', page);
+
+                // Update pagination UI
+                this.pagination.update(this.currentPage);
+            }
+
+            /**
+             * Scrolls the view to the top of the image container smoothly.
+             */
+            scrollToTop() {
+                this.imageContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            /**
+             * Clears images from the container and disconnects the observer.
+             */
+            clearImages() {
+                // Disconnect the observer if it exists
+                if (this.observer) {
+                    this.observer.disconnect();
+                    this.observer = null;
+                }
+
+                // Remove all child elements from the image container
+                while (this.imageContainer.firstChild) {
+                    // If any event listeners are attached to child elements, remove them here
+                    // Currently, no event listeners are attached, so simply remove the child
+                    this.imageContainer.removeChild(this.imageContainer.firstChild);
+                }
+            }
+
+            /**
+             * Performs cleanup by disconnecting observers and removing event listeners.
+             */
+            cleanup() {
+                // Disconnect the IntersectionObserver
+                if (this.observer) {
+                    this.observer.disconnect();
+                    this.observer = null;
+                }
+
+                // Clear the image container
+                this.clearImages();
+
+                // Clear pagination container
+                if (this.pagination) {
+                    this.pagination.destroy();
+                }
+
+                // Remove event listeners if any
+                window.removeEventListener('beforeunload', this.cleanup.bind(this));
+            }
         }
 
         /**
-         * Pagination component to create navigation buttons.
-         * @param {number} totalPages - Total number of pages.
-         * @param {number} maxPagesVisible - Maximum number of visible pagination buttons.
-         * @param {number} currentPage - Current active page.
+         * PaginationButton Class
+         * Manages the creation and handling of pagination buttons.
          */
-        function PaginationButton(totalPages, maxPagesVisible = 15, currentPage = 1) {
-            const paginationButtonContainer = document.createElement('div');
-            paginationButtonContainer.className = 'pagination-buttons';
-            
-            const createButton = (label, cls, disabled, handleClick) => {
+        class PaginationButton {
+            /**
+             * Constructor for the PaginationButton class.
+             * @param {number} totalPages - Total number of pages.
+             * @param {number} maxPagesVisible - Maximum number of visible pagination buttons.
+             * @param {number} currentPage - Current active page.
+             * @param {Function} onPageChange - Callback function when a page is changed.
+             */
+            constructor(totalPages, maxPagesVisible = 15, currentPage = 1, onPageChange) {
+                this.totalPages = totalPages;
+                this.maxPagesVisible = maxPagesVisible;
+                this.currentPage = currentPage;
+                this.onPageChange = onPageChange;
+                this.paginationButtonContainer = null;
+            }
+
+            /**
+             * Creates a single button element.
+             * @param {string} label - The text label for the button.
+             * @param {string} cls - Additional class names.
+             * @param {boolean} disabled - Whether the button is disabled.
+             * @param {Function} handleClick - Click event handler.
+             * @returns {HTMLElement} - The button element.
+             */
+            createButton(label, cls, disabled, handleClick) {
                 const button = document.createElement('button');
                 button.textContent = label;
                 button.className = `page-btn ${cls}`;
                 button.disabled = disabled;
                 button.addEventListener('click', handleClick);
                 return button;
-            };
+            }
 
-            const render = () => {
-                paginationButtonContainer.innerHTML = '';  // Clear existing buttons
+            /**
+             * Renders the pagination buttons.
+             * @param {HTMLElement} container - The container to render the buttons into.
+             */
+            render(container) {
+                this.paginationButtonContainer = document.createElement('div');
+                this.paginationButtonContainer.className = 'pagination-buttons';
+
+                this.renderButtons();
+
+                container.appendChild(this.paginationButtonContainer);
+            }
+
+            /**
+             * Updates the pagination UI when the current page changes.
+             * @param {number} newPage - The new current page.
+             */
+            update(newPage) {
+                this.currentPage = newPage;
+                this.renderButtons();
+            }
+
+            /**
+             * Renders the pagination buttons based on the current state.
+             */
+            renderButtons() {
+                if (!this.paginationButtonContainer) return;
+
+                // Clear existing buttons
+                this.paginationButtonContainer.innerHTML = '';
 
                 // Start button
-                const startButton = createButton('start', 'start-page', currentPage === 1, () => {
-                    currentPage = 1;
-                    render();
-                    loadPage(currentPage);
+                const startButton = this.createButton('Start', 'start-page', this.currentPage === 1, () => {
+                    if (this.currentPage !== 1) {
+                        this.onPageChange(1);
+                    }
                 });
-                paginationButtonContainer.appendChild(startButton);
+                this.paginationButtonContainer.appendChild(startButton);
 
                 // Previous button
-                const prevButton = createButton('prev', 'prev-page', currentPage === 1, () => {
-                    currentPage = Math.max(currentPage - 1, 1);
-                    render();
-                    loadPage(currentPage);
+                const prevButton = this.createButton('Prev', 'prev-page', this.currentPage === 1, () => {
+                    if (this.currentPage > 1) {
+                        this.onPageChange(this.currentPage - 1);
+                    }
                 });
-                paginationButtonContainer.appendChild(prevButton);
+                this.paginationButtonContainer.appendChild(prevButton);
 
                 // Display range of page buttons
-                let startPage = Math.max(1, currentPage - Math.floor(maxPagesVisible / 2));
-                let endPage = Math.min(totalPages, startPage + maxPagesVisible - 1);
+                let startPage = Math.max(1, this.currentPage - Math.floor(this.maxPagesVisible / 2));
+                let endPage = Math.min(this.totalPages, startPage + this.maxPagesVisible - 1);
 
-                if (endPage - startPage + 1 < maxPagesVisible) {
-                    startPage = Math.max(1, endPage - maxPagesVisible + 1);
+                if (endPage - startPage + 1 < this.maxPagesVisible) {
+                    startPage = Math.max(1, endPage - this.maxPagesVisible + 1);
                 }
 
                 for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = createButton(i.toString(), i === currentPage ? 'active' : '', false, () => {
-                        currentPage = i;
-                        render();
-                        loadPage(currentPage);
+                    const pageButton = this.createButton(i.toString(), i === this.currentPage ? 'active' : '', false, () => {
+                        if (i !== this.currentPage) {
+                            this.onPageChange(i);
+                        }
                     });
-                    paginationButtonContainer.appendChild(pageButton);
+                    this.paginationButtonContainer.appendChild(pageButton);
                 }
 
                 // Next button
-                const nextButton = createButton('next', 'next-page', currentPage === totalPages, () => {
-                    currentPage = Math.min(currentPage + 1, totalPages);
-                    render();
-                    loadPage(currentPage);
+                const nextButton = this.createButton('Next', 'next-page', this.currentPage === this.totalPages, () => {
+                    if (this.currentPage < this.totalPages) {
+                        this.onPageChange(this.currentPage + 1);
+                    }
                 });
-                paginationButtonContainer.appendChild(nextButton);
+                this.paginationButtonContainer.appendChild(nextButton);
 
                 // End button
-                const endButton = createButton('end', 'end-page', currentPage === totalPages, () => {
-                    currentPage = totalPages;
-                    render();
-                    loadPage(currentPage);
+                const endButton = this.createButton('End', 'end-page', this.currentPage === this.totalPages, () => {
+                    if (this.currentPage !== this.totalPages) {
+                        this.onPageChange(this.totalPages);
+                    }
                 });
-                paginationButtonContainer.appendChild(endButton);
-            };
+                this.paginationButtonContainer.appendChild(endButton);
+            }
 
-            this.render = (container) => {
-                render();
-                container.appendChild(paginationButtonContainer);
-            };
+            /**
+             * Destroys the pagination buttons and removes event listeners.
+             */
+            destroy() {
+                if (this.paginationButtonContainer) {
+                    // Remove all child event listeners by cloning nodes
+                    const buttons = this.paginationButtonContainer.querySelectorAll('button.page-btn');
+                    buttons.forEach(button => {
+                        const clone = button.cloneNode(true);
+                        button.parentNode.replaceChild(clone, button);
+                    });
+
+                    // Remove the container from the DOM
+                    if (this.paginationButtonContainer.parentNode) {
+                        this.paginationButtonContainer.parentNode.removeChild(this.paginationButtonContainer);
+                    }
+                    this.paginationButtonContainer = null;
+                }
+            }
         }
 
         /**
-         * Initializes the image gallery and pagination.
+         * Initializes the gallery once the window has loaded.
          */
-        function init() {
-            const savedPage = parseInt(localStorage.getItem('currentPage'), 10) || 1;
-            currentPage = savedPage;
-            
-            const totalPages = Math.ceil(imageData.length / imagesPerPage);
-            const paginationButtons = new PaginationButton(totalPages, 15, currentPage);
-            
-            paginationButtons.render(document.getElementById('pagination-container'));
-            loadPage(currentPage);
+        function initGallery() {
+            const gallery = new Gallery({
+                imagesPerPage: 12,
+                currentPage: 1,
+                imageData: imageData, // Assuming imageData is loaded from imageData.js
+                imageContainerId: 'image-container',
+                paginationContainerId: 'pagination-container'
+            });
         }
 
-        // Initialize the page when the window is loaded
-        window.addEventListener('load', init);
+        // Initialize the gallery when the window is loaded
+        window.addEventListener('load', initGallery);
     </script>
 
 </body>
