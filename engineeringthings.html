@@ -13,6 +13,7 @@
 
     <!-- CSS Styles -->
     <style>
+        /* Base Styles */
         body {
             margin: 0;
             padding: 0;
@@ -20,93 +21,113 @@
             flex-direction: column;
             align-items: center;
             font-family: 'Roboto', sans-serif;
+            background-color: #ffffff;
+            color: #333333;
         }
 
-        /* Container for images */
+        /* Image Container */
         #image-container {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             margin-top: 20px;
             max-width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .image-container {
+            width: 300px;
+            height: 400px;
             padding: 10px;
             margin: 5px;
             background-color: #f4f4f4;
             border: 1px solid #ddd;
-            text-align: center;
-            width: 300px;
-            height: 500px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
+            text-align: center;
             box-sizing: border-box;
+            transition: transform 0.2s;
         }
 
-        /* Ensure image and caption within the link are aligned */
+        .image-container:hover {
+            transform: scale(1.02);
+        }
+
         .image-container a {
             display: flex;
             flex-direction: column;
             align-items: center;
-            text-decoration: none; /* Remove underline */
-            color: inherit; /* Maintain text color */
-            height: 100%;
+            text-decoration: none;
+            color: inherit;
             width: 100%;
+            height: 100%;
         }
 
         .image-container img {
             width: 100%;
             height: auto;
             object-fit: cover;
+            border-bottom: 1px solid #ddd;
+            border-radius: 8px 8px 0 0;
         }
 
         .image-caption {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 18px;
-            color: #333;
             flex-grow: 1;
         }
 
-        /* Pagination buttons container */
-        .pagination-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-        }
+        /* Updated Pagination Button Styles */
+.pagination-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    padding: 10px;
+    gap: 10px; /* Add some space between buttons */
+}
 
-        .page-btn {
-            padding: 10px 15px;
-            margin: 5px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-family: 'Roboto', sans-serif;
-        }
+.page-btn {
+    padding: 12px 18px;
+    margin: 5px;
+    background-color: #007bff;
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 600; /* Make the text bold */
+    font-size: 16px; /* Slightly increase the font size */
+    transition: all 0.3s ease;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-        .page-btn.active {
-            background-color: #0056b3;
-        }
+.page-btn.active {
+    background-color: #0056b3;
+    border-color: #004085;
+    color: white;
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.15); /* Deeper shadow for active button */
+}
 
-        .page-btn:hover {
-            background-color: #0056b3;
-        }
+.page-btn:hover {
+    background-color: #0056b3;
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+    transform: translateY(-2px); /* Lift the button slightly on hover */
+}
 
-        .page-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
+.page-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none; /* Remove shadow for disabled buttons */
+    color: #666;
+}
 
-        /* Responsive Styles for Tablets */
+        /* Responsive Styles */
         @media (max-width: 768px) {
-            #image-container {
-                margin-top: 10px;
-            }
-
             .image-container {
                 width: 220px;
                 height: auto;
@@ -116,17 +137,12 @@
                 font-size: 16px;
             }
 
-            .pagination-buttons {
-                margin-top: 10px;
-            }
-
             .page-btn {
-                padding: 8px 12px;
-                margin: 3px;
-            }
+        padding: 10px 14px;
+        font-size: 14px;
+    }
         }
 
-        /* Responsive Styles for Smartphones */
         @media (max-width: 480px) {
             .image-container {
                 width: 160px;
@@ -138,178 +154,206 @@
             }
 
             .page-btn {
-                padding: 5px 8px;
-                margin: 2px;
-            }
+        padding: 8px 10px;
+        font-size: 12px;
+    }
 
-            .pagination-buttons {
-                margin-top: 5px;
-                flex-wrap: nowrap;
-                overflow-x: auto;
-            }
+    .pagination-buttons {
+        gap: 5px; /* Reduce the gap for smaller screens */
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
 
-            .pagination-buttons .page-btn {
-                min-width: 40px;
-                font-size: 12px;
-            }
+    .pagination-buttons .page-btn {
+        min-width: 40px;
+        font-size: 12px;
+    }
         }
     </style>
 </head>
 <body>
 
-    <!-- Container for images -->
-    <div id="image-container"></div>
+    <!-- Image Gallery Container -->
+    <main id="image-container" aria-label="Image Gallery"></main>
 
-    <!-- Container for pagination buttons -->
-    <div id="pagination-container"></div>
+    <!-- Pagination Controls -->
+    <nav id="pagination-container" aria-label="Pagination"></nav>
 
-    <!-- Load image data from external JavaScript -->
+    <!-- External Image Data -->
     <script src="imageData.js"></script>
 
-    <!-- Main Script -->
+    <!-- Main JavaScript -->
     <script>
-        const imagesPerPage = 12;  // Number of images to display per page
-        let currentPage = 1;       // Current page
-        /**
-         * Creates a single image container element with image and caption.
-         * @param {Object} imageInfo - Object containing image details (src, caption, link).
-         * @returns {HTMLElement} - The complete image container element.
-         */
-        function createImage(imageInfo) {
-            const div = document.createElement('div');
-            div.className = 'image-container';
-            
-            const link = document.createElement('a');
-            link.href = imageInfo.link;
-            link.target = '_blank';
-            
-            const img = document.createElement('img');
-            img.src = imageInfo.src;
-            img.alt = imageInfo.caption;
-            
-            const caption = document.createElement('p');
-            caption.className = 'image-caption';
-            caption.textContent = imageInfo.caption;
-            
-            link.appendChild(img);
-            link.appendChild(caption);
-            div.appendChild(link);
-            
-            return div;
-        }
+        (function() {
+            'use strict';
 
-        /**
-         * Loads and displays the images for a specific page.
-         * @param {number} page - The page number to load.
-         */
-        function loadPage(page) {
-            const container = document.getElementById('image-container');
-            container.innerHTML = '';  // Clear the previous content
-            
-            const start = (page - 1) * imagesPerPage;
-            const end = Math.min(start + imagesPerPage, imageData.length);
-            for (let i = start; i < end; i++) {
-                container.appendChild(createImage(imageData[i]));
+            const IMAGES_PER_PAGE = 12;
+            let currentPage = 1;
+
+            /**
+             * Creates an image card element.
+             * @param {Object} imageInfo - Image details including src, caption, and link.
+             * @returns {HTMLElement} - The image card element.
+             */
+            const createImageCard = ({ src, caption, link }) => {
+                const card = document.createElement('div');
+                card.className = 'image-container';
+
+                const anchor = document.createElement('a');
+                anchor.href = link;
+                anchor.target = '_blank';
+                anchor.rel = 'noopener noreferrer';
+
+                const image = document.createElement('img');
+                image.src = src;
+                image.alt = caption;
+
+                const captionElem = document.createElement('p');
+                captionElem.className = 'image-caption';
+                captionElem.textContent = caption;
+
+                anchor.appendChild(image);
+                anchor.appendChild(captionElem);
+                card.appendChild(anchor);
+
+                return card;
+            };
+
+            /**
+             * Renders images for the specified page.
+             * @param {number} page - The page number to display.
+             */
+            const renderPage = (page) => {
+                const container = document.getElementById('image-container');
+                container.innerHTML = '';
+
+                const startIndex = (page - 1) * IMAGES_PER_PAGE;
+                const endIndex = Math.min(startIndex + IMAGES_PER_PAGE, imageData.length);
+
+                imageData.slice(startIndex, endIndex).forEach(imageInfo => {
+                    container.appendChild(createImageCard(imageInfo));
+                });
+
+                localStorage.setItem('currentPage', page);
+            };
+
+            /**
+             * Creates and manages pagination buttons.
+             * @param {number} totalPages - Total number of pages.
+             * @param {number} maxVisible - Maximum number of visible pagination buttons.
+             */
+            class Pagination {
+                constructor(totalPages, maxVisible = 15) {
+                    this.totalPages = totalPages;
+                    this.maxVisible = maxVisible;
+                    this.currentPage = currentPage;
+                    this.container = document.getElementById('pagination-container');
+                }
+
+                /**
+                 * Initializes the pagination by rendering buttons.
+                 */
+                init() {
+                    this.render();
+                }
+
+                /**
+                 * Creates a single pagination button.
+                 * @param {string|number} label - Button label.
+                 * @param {string} className - Additional class names.
+                 * @param {boolean} disabled - Whether the button is disabled.
+                 * @param {Function} onClick - Click event handler.
+                 * @returns {HTMLElement} - The button element.
+                 */
+                createButton(label, className = '', disabled = false, onClick = () => {}) {
+                    const button = document.createElement('button');
+                    button.textContent = label;
+                    button.className = `page-btn ${className}`.trim();
+                    button.disabled = disabled;
+                    button.addEventListener('click', onClick);
+                    return button;
+                }
+
+                /**
+                 * Renders the pagination buttons.
+                 */
+                render() {
+                    this.container.innerHTML = '';
+
+                    // Start Button
+                    const startBtn = this.createButton('First', '', this.currentPage === 1, () => {
+                        this.currentPage = 1;
+                        this.update();
+                    });
+                    this.container.appendChild(startBtn);
+
+                    // Previous Button
+                    const prevBtn = this.createButton('Prev', '', this.currentPage === 1, () => {
+                        this.currentPage = Math.max(this.currentPage - 1, 1);
+                        this.update();
+                    });
+                    this.container.appendChild(prevBtn);
+
+                    // Calculate visible page range
+                    let startPage = Math.max(1, this.currentPage - Math.floor(this.maxVisible / 2));
+                    let endPage = startPage + this.maxVisible - 1;
+
+                    if (endPage > this.totalPages) {
+                        endPage = this.totalPages;
+                        startPage = Math.max(1, endPage - this.maxVisible + 1);
+                    }
+
+                    // Page Number Buttons
+                    for (let i = startPage; i <= endPage; i++) {
+                        const isActive = i === this.currentPage;
+                        const pageBtn = this.createButton(i, isActive ? 'active' : '', false, () => {
+                            this.currentPage = i;
+                            this.update();
+                        });
+                        this.container.appendChild(pageBtn);
+                    }
+
+                    // Next Button
+                    const nextBtn = this.createButton('Next', '', this.currentPage === this.totalPages, () => {
+                        this.currentPage = Math.min(this.currentPage + 1, this.totalPages);
+                        this.update();
+                    });
+                    this.container.appendChild(nextBtn);
+
+                    // End Button
+                    const endBtn = this.createButton('Last', '', this.currentPage === this.totalPages, () => {
+                        this.currentPage = this.totalPages;
+                        this.update();
+                    });
+                    this.container.appendChild(endBtn);
+                }
+
+                /**
+                 * Updates the current page and re-renders the pagination and images.
+                 */
+                update() {
+                    renderPage(this.currentPage);
+                    this.render();
+                }
             }
 
-            // Store the current page in localStorage
-            localStorage.setItem('currentPage', page);
-        }
+            /**
+             * Initializes the image gallery and pagination on page load.
+             */
+            const initializeGallery = () => {
+                const savedPage = parseInt(localStorage.getItem('currentPage'), 10);
+                currentPage = isNaN(savedPage) ? 1 : savedPage;
 
-        /**
-         * Pagination component to create navigation buttons.
-         * @param {number} totalPages - Total number of pages.
-         * @param {number} maxPagesVisible - Maximum number of visible pagination buttons.
-         * @param {number} currentPage - Current active page.
-         */
-        function PaginationButton(totalPages, maxPagesVisible = 15, currentPage = 1) {
-            const paginationButtonContainer = document.createElement('div');
-            paginationButtonContainer.className = 'pagination-buttons';
-            
-            const createButton = (label, cls, disabled, handleClick) => {
-                const button = document.createElement('button');
-                button.textContent = label;
-                button.className = `page-btn ${cls}`;
-                button.disabled = disabled;
-                button.addEventListener('click', handleClick);
-                return button;
+                const totalPages = Math.ceil(imageData.length / IMAGES_PER_PAGE);
+                const pagination = new Pagination(totalPages, 15);
+                pagination.init();
+
+                renderPage(currentPage);
             };
 
-            const render = () => {
-                paginationButtonContainer.innerHTML = '';  // Clear existing buttons
-
-                // Start button
-                const startButton = createButton('start', 'start-page', currentPage === 1, () => {
-                    currentPage = 1;
-                    render();
-                    loadPage(currentPage);
-                });
-                paginationButtonContainer.appendChild(startButton);
-
-                // Previous button
-                const prevButton = createButton('prev', 'prev-page', currentPage === 1, () => {
-                    currentPage = Math.max(currentPage - 1, 1);
-                    render();
-                    loadPage(currentPage);
-                });
-                paginationButtonContainer.appendChild(prevButton);
-
-                // Display range of page buttons
-                let startPage = Math.max(1, currentPage - Math.floor(maxPagesVisible / 2));
-                let endPage = Math.min(totalPages, startPage + maxPagesVisible - 1);
-
-                if (endPage - startPage + 1 < maxPagesVisible) {
-                    startPage = Math.max(1, endPage - maxPagesVisible + 1);
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = createButton(i.toString(), i === currentPage ? 'active' : '', false, () => {
-                        currentPage = i;
-                        render();
-                        loadPage(currentPage);
-                    });
-                    paginationButtonContainer.appendChild(pageButton);
-                }
-
-                // Next button
-                const nextButton = createButton('next', 'next-page', currentPage === totalPages, () => {
-                    currentPage = Math.min(currentPage + 1, totalPages);
-                    render();
-                    loadPage(currentPage);
-                });
-                paginationButtonContainer.appendChild(nextButton);
-
-                // End button
-                const endButton = createButton('end', 'end-page', currentPage === totalPages, () => {
-                    currentPage = totalPages;
-                    render();
-                    loadPage(currentPage);
-                });
-                paginationButtonContainer.appendChild(endButton);
-            };
-
-            this.render = (container) => {
-                render();
-                container.appendChild(paginationButtonContainer);
-            };
-        }
-
-        /**
-         * Initializes the image gallery and pagination.
-         */
-        function init() {
-            const savedPage = parseInt(localStorage.getItem('currentPage'), 10) || 1;
-            currentPage = savedPage;
-            
-            const totalPages = Math.ceil(imageData.length / imagesPerPage);
-            const paginationButtons = new PaginationButton(totalPages, 15, currentPage);
-            
-            paginationButtons.render(document.getElementById('pagination-container'));
-            loadPage(currentPage);
-        }
-
-        // Initialize the page when the window is loaded
-        window.addEventListener('load', init);
+            // Initialize when the DOM is fully loaded
+            document.addEventListener('DOMContentLoaded', initializeGallery);
+        })();
     </script>
 
 </body>
