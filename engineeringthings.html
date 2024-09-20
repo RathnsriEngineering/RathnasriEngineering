@@ -24,22 +24,30 @@
             --button-padding: 8px 12px;
             --button-font-size: 14px;
             --button-icon-size: 16px;
+            --fade-duration: 0.5s;
+            --loader-size: 40px;
+            --loader-color: #007bff;
+            --modal-background: rgba(0, 0, 0, 0.8);
+            --modal-transition: 0.3s ease-in-out;
+            --back-to-top-size: 50px;
+            --skeleton-bg: #e2e2e2;
         }
 
         /* Reset and Base Styles */
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             font-family: var(--font-family);
             background-color: #ffffff;
             color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
 
         /* Main Content Area */
@@ -47,6 +55,7 @@
             width: 100%;
             max-width: 1200px;
             padding: 20px;
+            flex: 1;
         }
 
         /* Container for Images */
@@ -56,6 +65,13 @@
             justify-content: center;
             gap: 20px;
             margin-top: 20px;
+            opacity: 1;
+            transition: opacity var(--fade-duration) ease-in-out;
+        }
+
+        /* Fade-out class for transition */
+        #image-container.fade-out {
+            opacity: 0;
         }
 
         .image-card {
@@ -67,6 +83,7 @@
             display: flex;
             flex-direction: column;
             transition: box-shadow var(--transition-speed);
+            position: relative;
         }
 
         .image-card:hover {
@@ -79,6 +96,11 @@
             display: flex;
             flex-direction: column;
             height: 100%;
+            outline: none;
+        }
+
+        .image-card a:focus {
+            box-shadow: 0 0 0 3px var(--primary-color-dark);
         }
 
         .image-card img {
@@ -87,6 +109,12 @@
             object-fit: cover;
             display: block;
             loading: lazy; /* Added lazy loading */
+            transition: transform var(--transition-speed);
+            cursor: pointer;
+        }
+
+        .image-card img:hover {
+            transform: scale(1.05);
         }
 
         .image-caption {
@@ -94,6 +122,21 @@
             font-size: 16px;
             flex-grow: 1;
             text-align: center;
+        }
+
+        /* Skeleton Loader Styles */
+        .skeleton {
+            background-color: var(--skeleton-bg);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -500px 0;
+            }
+            100% {
+                background-position: 500px 0;
+            }
         }
 
         /* Pagination Buttons Container */
@@ -119,6 +162,7 @@
             justify-content: center;
             min-width: 40px;
             height: 40px;
+            position: relative;
         }
 
         .page-btn.active {
@@ -141,6 +185,104 @@
         .page-btn .icon {
             margin-right: 5px;
             font-size: var(--button-icon-size);
+        }
+
+        /* Loader Styles */
+        .loader {
+            border: 4px solid var(--secondary-color);
+            border-top: 4px solid var(--loader-color);
+            border-radius: 50%;
+            width: var(--loader-size);
+            height: var(--loader-size);
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal (Lightbox) Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--modal-background);
+            align-items: center;
+            justify-content: center;
+            transition: opacity var(--transition-speed) ease-in-out;
+        }
+
+        .modal.open {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            animation: fadeIn var(--transition-speed) forwards;
+        }
+
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .close-modal:hover {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        /* Back to Top Button Styles */
+        #back-to-top {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: var(--back-to-top-size);
+            height: var(--back-to-top-size);
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 100;
+            transition: background-color var(--transition-speed), transform var(--transition-speed);
+        }
+
+        #back-to-top:hover {
+            background-color: var(--primary-color-dark);
+            transform: translateY(-2px);
         }
 
         /* Responsive Design */
@@ -169,6 +311,26 @@
                 font-size: 14px;
                 margin-right: 0;
             }
+
+            /* Adjust Back to Top Button for smaller screens */
+            #back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Fade-in Animation for Modal */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
@@ -179,9 +341,23 @@
         <!-- Container for Images -->
         <section id="image-container" aria-label="Image Gallery"></section>
 
+        <!-- Loader -->
+        <div class="loader" id="loader" aria-label="Loading"></div>
+
         <!-- Container for Pagination Buttons -->
         <nav id="pagination-container" aria-label="Pagination Navigation"></nav>
     </main>
+
+    <!-- Modal (Lightbox) -->
+    <div class="modal" id="lightbox-modal" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+        <div class="modal-content">
+            <button class="close-modal" aria-label="Close">&times;</button>
+            <img src="" alt="" id="lightbox-image">
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" aria-label="Back to Top">&#8679;</button>
 
     <!-- Load Image Data from External JavaScript -->
     <script src="imageData.js" defer></script>
@@ -195,24 +371,48 @@
          */
         const IMAGES_PER_PAGE = 12; // Number of images to display per page
         let currentPage = 1;        // Current active page
+        let totalPages = 1;         // Total number of pages
 
         /**
          * Initializes the image gallery and pagination on window load.
          */
         window.addEventListener('DOMContentLoaded', () => {
+            if (!Array.isArray(imageData) || imageData.length === 0) {
+                console.error('imageData is not defined or is empty.');
+                displayErrorMessage();
+                return;
+            }
+
             initializeGallery();
+            setupBackToTopButton();
+            setupLightbox();
         });
 
         /**
-         * Initializes the image gallery by loading the saved page or defaulting to page 1.
+         * Displays an error message to the user if image data is invalid.
+         */
+        function displayErrorMessage() {
+            const container = document.getElementById('image-container');
+            container.innerHTML = '<p style="color: red; text-align: center;">No images available to display.</p>';
+        }
+
+        /**
+         * Initializes the image gallery by setting up pagination and loading the current page.
          */
         function initializeGallery() {
-            const savedPage = parseInt(localStorage.getItem('currentPage'), 10);
-            currentPage = isValidPage(savedPage) ? savedPage : 1;
-
-            const totalPages = Math.ceil(imageData.length / IMAGES_PER_PAGE);
+            currentPage = getSavedPage() || 1;
+            totalPages = Math.ceil(imageData.length / IMAGES_PER_PAGE);
             renderPagination(totalPages);
             loadPage(currentPage);
+        }
+
+        /**
+         * Retrieves the saved current page from localStorage.
+         * @returns {number|null} - The saved page number or null if not found.
+         */
+        function getSavedPage() {
+            const savedPage = parseInt(localStorage.getItem('currentPage'), 10);
+            return isValidPage(savedPage) ? savedPage : null;
         }
 
         /**
@@ -221,7 +421,7 @@
          * @returns {boolean} - True if valid, otherwise false.
          */
         function isValidPage(page) {
-            return Number.isInteger(page) && page >= 1 && page <= Math.ceil(imageData.length / IMAGES_PER_PAGE);
+            return Number.isInteger(page) && page >= 1 && page <= totalPages;
         }
 
         /**
@@ -244,6 +444,12 @@
             img.alt = imageInfo.caption;
             img.loading = 'lazy'; // Added lazy loading
 
+            // Add event listener for lightbox
+            img.addEventListener('click', (event) => {
+                event.preventDefault();
+                openLightbox(imageInfo);
+            });
+
             const caption = document.createElement('div');
             caption.className = 'image-caption';
             caption.textContent = imageInfo.caption;
@@ -256,20 +462,55 @@
         }
 
         /**
-         * Loads and displays images for the specified page.
+         * Loads and displays images for the specified page with smooth transitions.
          * @param {number} page - The page number to load.
          */
         function loadPage(page) {
             const container = document.getElementById('image-container');
-            container.innerHTML = ''; // Clear existing images
+            const loader = document.getElementById('loader');
 
-            const startIndex = (page - 1) * IMAGES_PER_PAGE;
-            const endIndex = Math.min(startIndex + IMAGES_PER_PAGE, imageData.length);
+            // Show loader
+            loader.style.display = 'block';
 
-            for (let i = startIndex; i < endIndex; i++) {
-                const imageCard = createImageCard(imageData[i]);
-                container.appendChild(imageCard);
-            }
+            // Fade out current images
+            container.classList.add('fade-out');
+
+            // Wait for the fade-out transition to complete
+            container.addEventListener('transitionend', function onFadeOut() {
+                container.removeEventListener('transitionend', onFadeOut);
+
+                // Clear existing images using DocumentFragment for performance
+                container.innerHTML = '';
+
+                const fragment = document.createDocumentFragment();
+                const startIndex = (page - 1) * IMAGES_PER_PAGE;
+                const endIndex = Math.min(startIndex + IMAGES_PER_PAGE, imageData.length);
+
+                for (let i = startIndex; i < endIndex; i++) {
+                    const imageCard = createImageCard(imageData[i]);
+                    // Add skeleton loader
+                    const skeleton = document.createElement('div');
+                    skeleton.className = 'image-card skeleton';
+                    skeleton.style.height = '400px'; // Approximate height
+                    fragment.appendChild(skeleton);
+                    // Replace skeleton with actual image once loaded
+                    imageCard.querySelector('img').addEventListener('load', () => {
+                        skeleton.replaceWith(imageCard);
+                    });
+                    fragment.appendChild(imageCard);
+                }
+
+                container.appendChild(fragment);
+
+                // Fade in new images
+                container.classList.remove('fade-out');
+
+                // Hide loader after images have faded in
+                container.addEventListener('transitionend', function onFadeIn() {
+                    container.removeEventListener('transitionend', onFadeIn);
+                    loader.style.display = 'none';
+                });
+            });
 
             // Save current page to localStorage
             localStorage.setItem('currentPage', page);
@@ -277,14 +518,50 @@
 
         /**
          * Renders the pagination buttons based on the total number of pages.
-         * @param {number} totalPages - Total number of pages.
+         * Utilizes event delegation for efficient event handling.
+         * @param {number} totalPagesCount - Total number of pages.
          */
-        function renderPagination(totalPages) {
+        function renderPagination(totalPagesCount) {
             const paginationContainer = document.getElementById('pagination-container');
             paginationContainer.innerHTML = ''; // Clear existing pagination
 
-            const pagination = new Pagination(totalPages, 7, currentPage); // Reduced maxVisible for better aesthetics
+            const pagination = new Pagination(totalPagesCount, 7, currentPage);
             paginationContainer.appendChild(pagination.render());
+
+            // Attach a single event listener for all pagination buttons (Event Delegation)
+            paginationContainer.addEventListener('click', (event) => {
+                const button = event.target.closest('button.page-btn');
+                if (!button || button.disabled) return;
+
+                const action = button.dataset.action;
+                let targetPage;
+
+                switch(action) {
+                    case 'first':
+                        targetPage = 1;
+                        break;
+                    case 'prev':
+                        targetPage = currentPage - 1;
+                        break;
+                    case 'next':
+                        targetPage = currentPage + 1;
+                        break;
+                    case 'last':
+                        targetPage = totalPagesCount;
+                        break;
+                    default:
+                        targetPage = parseInt(button.textContent, 10);
+                }
+
+                if (isValidPage(targetPage)) {
+                    currentPage = targetPage;
+                    loadPage(currentPage);
+                    // Update pagination to reflect the new current page
+                    renderPagination(totalPagesCount);
+                    // Scroll to top of image container for better UX
+                    document.getElementById('image-container').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
         }
 
         /**
@@ -293,14 +570,14 @@
         class Pagination {
             /**
              * Creates a Pagination instance.
-             * @param {number} totalPages - Total number of pages.
+             * @param {number} totalPagesCount - Total number of pages.
              * @param {number} maxVisible - Maximum number of visible pagination buttons.
-             * @param {number} currentPage - Current active page.
+             * @param {number} currentPageNumber - Current active page.
              */
-            constructor(totalPages, maxVisible = 7, currentPage = 1) {
-                this.totalPages = totalPages;
+            constructor(totalPagesCount, maxVisible = 7, currentPageNumber = 1) {
+                this.totalPages = totalPagesCount;
                 this.maxVisible = maxVisible;
-                this.currentPage = currentPage;
+                this.currentPage = currentPageNumber;
                 this.container = document.createElement('div');
                 this.container.className = 'pagination-buttons';
                 this.createButtons();
@@ -311,32 +588,22 @@
              */
             createButtons() {
                 // Start Button
-                this.container.appendChild(this.createButton('<span class="icon">&#x23EE;</span>', 'start-page', this.currentPage === 1, () => {
-                    this.updatePage(1);
-                }));
+                this.container.appendChild(this.createButton('<span class="icon">&#x23EE;</span>', 'start-page', this.currentPage === 1, 'first'));
 
                 // Previous Button
-                this.container.appendChild(this.createButton('<span class="icon">&#x25C0;</span>', 'prev-page', this.currentPage === 1, () => {
-                    this.updatePage(this.currentPage - 1);
-                }));
+                this.container.appendChild(this.createButton('<span class="icon">&#x25C0;</span>', 'prev-page', this.currentPage === 1, 'prev'));
 
                 // Page Number Buttons
                 const { startPage, endPage } = this.calculatePageRange();
                 for (let i = startPage; i <= endPage; i++) {
-                    this.container.appendChild(this.createButton(i, '', false, () => {
-                        this.updatePage(i);
-                    }, i === this.currentPage));
+                    this.container.appendChild(this.createButton(i, '', false, null, i === this.currentPage));
                 }
 
                 // Next Button
-                this.container.appendChild(this.createButton('<span class="icon">&#x25B6;</span>', 'next-page', this.currentPage === this.totalPages, () => {
-                    this.updatePage(this.currentPage + 1);
-                }));
+                this.container.appendChild(this.createButton('<span class="icon">&#x25B6;</span>', 'next-page', this.currentPage === this.totalPages, 'next'));
 
                 // End Button
-                this.container.appendChild(this.createButton('<span class="icon">&#x23ED;</span>', 'end-page', this.currentPage === this.totalPages, () => {
-                    this.updatePage(this.totalPages);
-                }));
+                this.container.appendChild(this.createButton('<span class="icon">&#x23ED;</span>', 'end-page', this.currentPage === this.totalPages, 'last'));
             }
 
             /**
@@ -360,37 +627,45 @@
              * @param {string|number} label - The text or HTML label of the button.
              * @param {string} cls - Additional CSS classes.
              * @param {boolean} disabled - Whether the button is disabled.
-             * @param {Function} onClick - Click event handler.
+             * @param {string|null} action - Data action for the button (e.g., 'first', 'prev').
              * @param {boolean} isActive - Whether the button represents the current page.
              * @returns {HTMLElement} - The pagination button element.
              */
-            createButton(label, cls = '', disabled = false, onClick = () => {}, isActive = false) {
+            createButton(label, cls = '', disabled = false, action = null, isActive = false) {
                 const button = document.createElement('button');
                 button.innerHTML = label; // Supports HTML for icons
                 button.className = `page-btn ${cls} ${isActive ? 'active' : ''}`;
                 button.disabled = disabled;
 
-                if (!isActive) {
-                    button.addEventListener('click', onClick);
+                if (action) {
+                    button.dataset.action = action;
+                    // Add ARIA labels for accessibility
+                    switch(action) {
+                        case 'first':
+                            button.setAttribute('aria-label', 'First Page');
+                            break;
+                        case 'prev':
+                            button.setAttribute('aria-label', 'Previous Page');
+                            break;
+                        case 'next':
+                            button.setAttribute('aria-label', 'Next Page');
+                            break;
+                        case 'last':
+                            button.setAttribute('aria-label', 'Last Page');
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    // Page number buttons
+                    button.setAttribute('aria-label', `Page ${label}`);
+                }
+
+                if (isActive) {
+                    button.setAttribute('aria-current', 'page');
                 }
 
                 return button;
-            }
-
-            /**
-             * Updates the current page and refreshes the gallery and pagination.
-             * @param {number} page - The new page number.
-             */
-            updatePage(page) {
-                if (page < 1 || page > this.totalPages) return;
-                this.currentPage = page;
-                currentPage = page;
-                loadPage(page);
-                // Re-render pagination
-                const paginationContainer = document.getElementById('pagination-container');
-                paginationContainer.innerHTML = '';
-                const newPagination = new Pagination(this.totalPages, 7, this.currentPage); // Adjusted maxVisible
-                paginationContainer.appendChild(newPagination.render());
             }
 
             /**
@@ -401,7 +676,78 @@
                 return this.container;
             }
         }
+
+        /**
+         * Sets up the Back to Top button functionality.
+         */
+        function setupBackToTopButton() {
+            const backToTopButton = document.getElementById('back-to-top');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTopButton.style.display = 'flex';
+                } else {
+                    backToTopButton.style.display = 'none';
+                }
+            });
+
+            backToTopButton.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        /**
+         * Sets up the Lightbox (Modal) functionality.
+         */
+        function setupLightbox() {
+            const modal = document.getElementById('lightbox-modal');
+            const modalImage = document.getElementById('lightbox-image');
+            const closeModalButton = modal.querySelector('.close-modal');
+
+            // Close modal when clicking the close button
+            closeModalButton.addEventListener('click', closeLightbox);
+
+            // Close modal when clicking outside the modal content
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeLightbox();
+                }
+            });
+
+            // Close modal when pressing the Esc key
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modal.classList.contains('open')) {
+                    closeLightbox();
+                }
+            });
+
+            /**
+             * Opens the lightbox with the specified image.
+             * @param {Object} imageInfo - Object containing image details (src, caption, link).
+             */
+            window.openLightbox = function(imageInfo) {
+                modalImage.src = imageInfo.src;
+                modalImage.alt = imageInfo.caption;
+                modal.classList.add('open');
+                // Prevent background scrolling
+                document.body.style.overflow = 'hidden';
+            }
+
+            /**
+             * Closes the lightbox modal.
+             */
+            function closeLightbox() {
+                modal.classList.remove('open');
+                modalImage.src = '';
+                modalImage.alt = '';
+                // Restore background scrolling
+                document.body.style.overflow = '';
+            }
+        }
     </script>
 
+    <!-- Load Image Data from External JavaScript -->
+    <!-- Ensure this script is placed before the main script to define imageData first -->
+    <script src="imageData.js" defer></script>
 </body>
 </html>
