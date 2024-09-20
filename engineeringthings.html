@@ -360,8 +360,9 @@
     <button id="back-to-top" aria-label="Back to Top">&#8679;</button>
 
     <!-- Load Image Data from External JavaScript -->
+    <!-- Ensure this script is loaded before the main script -->
     <script src="imageData.js" defer></script>
-    
+
     <!-- Main Script -->
     <script>
         'use strict';
@@ -511,9 +512,6 @@
                     loader.style.display = 'none';
                 });
             });
-
-            // Save current page to localStorage
-            localStorage.setItem('currentPage', page);
         }
 
         /**
@@ -746,8 +744,5 @@
         }
     </script>
 
-    <!-- Load Image Data from External JavaScript -->
-    <!-- Ensure this script is placed before the main script to define imageData first -->
-    <script src="imageData.js" defer></script>
 </body>
 </html>
