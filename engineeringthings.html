@@ -245,6 +245,13 @@
         });
 
         /**
+         * Clears cached data when the user leaves the webpage.
+         */
+        window.addEventListener('beforeunload', () => {
+            localStorage.removeItem('currentPage');
+        });
+
+        /**
          * Initializes the image gallery by loading the saved page or defaulting to page 1.
          */
         function initializeGallery() {
@@ -344,7 +351,7 @@
                     loader.style.display = 'none';
                 });
             });
-
+            
             // Save current page to localStorage
             localStorage.setItem('currentPage', page);
         }
