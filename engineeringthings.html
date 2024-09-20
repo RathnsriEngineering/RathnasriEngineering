@@ -27,45 +27,36 @@
             --fade-duration: 0.5s;
             --loader-size: 40px;
             --loader-color: #007bff;
-            --max-container-width: 1200px;
-            --image-card-width: 300px;
-            --image-card-hover-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            --pagination-button-size: 40px;
-            --pagination-button-active-bg: var(--primary-color-dark);
-            --pagination-button-disabled-bg: var(--disabled-color);
-            --pagination-button-hover-bg: var(--primary-color-dark);
-            --pagination-icon-size: 16px;
-            --pagination-gap: 8px;
         }
 
         /* Reset and Base Styles */
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
 
         body {
-            font-family: var(--font-family);
-            background-color: #ffffff;
-            color: var(--text-color);
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            font-family: var(--font-family);
+            background-color: #ffffff;
+            color: var(--text-color);
         }
 
         /* Main Content Area */
         main {
             width: 100%;
-            max-width: var(--max-container-width);
+            max-width: 1200px;
             padding: 20px;
         }
 
         /* Container for Images */
         #image-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 20px;
             margin-top: 20px;
             opacity: 1;
@@ -82,20 +73,19 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             overflow: hidden;
+            width: 300px;
             display: flex;
             flex-direction: column;
-            transition: box-shadow var(--transition-speed), transform var(--transition-speed);
-            position: relative;
+            transition: box-shadow var(--transition-speed);
         }
 
         .image-card:hover {
-            box-shadow: var(--image-card-hover-shadow);
-            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .image-card a {
-            text-decoration: none;
-            color: inherit;
+            text-decoration: none; /* Removed underline from captions */
+            color: inherit; /* Ensure text inherits the parent color */
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -106,7 +96,6 @@
             height: auto;
             object-fit: cover;
             display: block;
-            /* Lazy loading is handled via IntersectionObserver */
         }
 
         .image-caption {
@@ -121,7 +110,7 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: var(--pagination-gap);
+            gap: 8px;
             margin-top: 30px;
         }
 
@@ -137,8 +126,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: var(--pagination-button-size);
-            height: var(--pagination-button-size);
+            min-width: 40px;
+            height: 40px;
         }
 
         .page-btn.active {
@@ -148,19 +137,19 @@
         }
 
         .page-btn:hover:not(.active):not(:disabled) {
-            background-color: var(--pagination-button-hover-bg);
+            background-color: var(--primary-color-dark);
             transform: translateY(-2px);
         }
 
         .page-btn:disabled {
-            background-color: var(--pagination-button-disabled-bg);
+            background-color: var(--disabled-color);
             cursor: not-allowed;
             transform: none;
         }
 
         .page-btn .icon {
             margin-right: 5px;
-            font-size: var(--pagination-icon-size);
+            font-size: var(--button-icon-size);
         }
 
         /* Loader Styles */
@@ -183,13 +172,13 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             .image-card {
-                grid-column: span 2;
+                width: 45%;
             }
         }
 
         @media (max-width: 480px) {
             .image-card {
-                grid-column: span 1;
+                width: 100%;
             }
 
             .pagination-buttons {
@@ -197,7 +186,7 @@
             }
 
             .page-btn {
-                width: 35px;
+                min-width: 35px;
                 height: 35px;
                 font-size: 12px;
             }
@@ -235,20 +224,12 @@
          */
         const IMAGES_PER_PAGE = 12; // Number of images to display per page
         let currentPage = 1;        // Current active page
-        let observer = null;        // IntersectionObserver instance
 
         /**
          * Initializes the image gallery and pagination on window load.
          */
         window.addEventListener('DOMContentLoaded', () => {
             initializeGallery();
-        });
-
-        /**
-         * Clears cached data when the user leaves the webpage.
-         */
-        window.addEventListener('beforeunload', () => {
-            localStorage.removeItem('currentPage');
         });
 
         /**
@@ -288,8 +269,9 @@
             link.setAttribute('aria-label', imageInfo.caption);
 
             const img = document.createElement('img');
-            img.dataset.src = imageInfo.src; // Use data-src for lazy loading
+            img.src = imageInfo.src;
             img.alt = imageInfo.caption;
+            img.loading = 'lazy'; // Added lazy loading
 
             const caption = document.createElement('div');
             caption.className = 'image-caption';
@@ -316,11 +298,6 @@
             // Fade out current images
             container.classList.add('fade-out');
 
-            // Remove previous observer if exists
-            if (observer) {
-                observer.disconnect();
-            }
-
             // Wait for the fade-out transition to complete
             container.addEventListener('transitionend', function onFadeOut() {
                 container.removeEventListener('transitionend', onFadeOut);
@@ -339,9 +316,6 @@
 
                 container.appendChild(fragment);
 
-                // Initialize IntersectionObserver for lazy loading
-                initializeLazyLoading();
-
                 // Fade in new images
                 container.classList.remove('fade-out');
 
@@ -351,43 +325,9 @@
                     loader.style.display = 'none';
                 });
             });
-            
+
             // Save current page to localStorage
             localStorage.setItem('currentPage', page);
-        }
-
-        /**
-         * Initializes the IntersectionObserver for lazy loading images.
-         */
-        function initializeLazyLoading() {
-            const images = document.querySelectorAll('img[data-src]');
-
-            // Options for the observer
-            const options = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.1
-            };
-
-            // Callback for the observer
-            const callback = (entries, observerInstance) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.removeAttribute('data-src');
-                        observerInstance.unobserve(img);
-                    }
-                });
-            };
-
-            // Create the observer
-            observer = new IntersectionObserver(callback, options);
-
-            // Observe each image
-            images.forEach(img => {
-                observer.observe(img);
-            });
         }
 
         /**
@@ -459,10 +399,10 @@
              * Creates and appends pagination buttons to the container.
              */
             createButtons() {
-                // First Page Button
-                this.container.appendChild(this.createButton('<span class="icon">&#x23EE;</span>', 'first-page', this.currentPage === 1, 'first'));
+                // Start Button
+                this.container.appendChild(this.createButton('<span class="icon">&#x23EE;</span>', 'start-page', this.currentPage === 1, 'first'));
 
-                // Previous Page Button
+                // Previous Button
                 this.container.appendChild(this.createButton('<span class="icon">&#x25C0;</span>', 'prev-page', this.currentPage === 1, 'prev'));
 
                 // Page Number Buttons
@@ -471,10 +411,10 @@
                     this.container.appendChild(this.createButton(i, '', false, null, i === this.currentPage));
                 }
 
-                // Next Page Button
+                // Next Button
                 this.container.appendChild(this.createButton('<span class="icon">&#x25B6;</span>', 'next-page', this.currentPage === this.totalPages, 'next'));
 
-                // Last Page Button
+                // End Button
                 this.container.appendChild(this.createButton('<span class="icon">&#x23ED;</span>', 'end-page', this.currentPage === this.totalPages, 'last'));
             }
 
@@ -514,6 +454,21 @@
                 }
 
                 return button;
+            }
+
+            /**
+             * Updates the current page and refreshes the gallery and pagination.
+             * @param {number} page - The new page number.
+             */
+            updatePage(page) {
+                if (page < 1 || page > this.totalPages) return;
+                this.currentPage = page;
+                loadPage(page);
+                // Re-render pagination
+                const paginationContainer = document.getElementById('pagination-container');
+                paginationContainer.innerHTML = '';
+                const newPagination = new Pagination(this.totalPages, 7, this.currentPage);
+                paginationContainer.appendChild(newPagination.render());
             }
 
             /**
