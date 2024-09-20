@@ -83,6 +83,7 @@
             height: auto;
             object-fit: cover;
             transition: filter 0.3s;
+            loading: lazy; /* Native lazy loading as a fallback */
         }
 
         .image-caption {
@@ -634,7 +635,7 @@
         }
 
         /**
-         * Initializes the gallery once the window has loaded.
+         * Initializes the gallery and pagination.
          */
         function initGallery() {
             if (typeof imageData === 'undefined' || !Array.isArray(imageData)) {
