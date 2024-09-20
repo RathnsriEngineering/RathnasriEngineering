@@ -258,9 +258,9 @@
                     window.scrollTo(0, parseInt(savedScroll, 10));
                 }
 
-                // Setup cleanup on page unload
+                // Setup cleanup on page hide
                 this.boundCleanup = this.cleanup.bind(this);
-                window.addEventListener('beforeunload', this.boundCleanup);
+                window.addEventListener('pagehide', this.boundCleanup);
             }
 
             /**
@@ -439,7 +439,7 @@
                 sessionStorage.setItem(this.scrollPositionKey, window.scrollY);
 
                 // Remove event listeners
-                window.removeEventListener('beforeunload', this.boundCleanup);
+                window.removeEventListener('pagehide', this.boundCleanup);
             }
         }
 
@@ -564,9 +564,9 @@
                 // Clear existing buttons
                 this.paginationButtonContainer.innerHTML = '';
 
-                // Start button
-                const startButton = this.createButton('First', '', this.currentPage === 1);
-                this.paginationButtonContainer.appendChild(startButton);
+                // First button
+                const firstButton = this.createButton('First', '', this.currentPage === 1);
+                this.paginationButtonContainer.appendChild(firstButton);
 
                 // Previous button
                 const prevButton = this.createButton('Prev', '', this.currentPage === 1);
@@ -607,9 +607,9 @@
                 const nextButton = this.createButton('Next', '', this.currentPage === this.totalPages);
                 this.paginationButtonContainer.appendChild(nextButton);
 
-                // End button
-                const endButton = this.createButton('Last', '', this.currentPage === this.totalPages);
-                this.paginationButtonContainer.appendChild(endButton);
+                // Last button
+                const lastButton = this.createButton('Last', '', this.currentPage === this.totalPages);
+                this.paginationButtonContainer.appendChild(lastButton);
             }
 
             /**
@@ -635,7 +635,7 @@
         }
 
         /**
-         * Initializes the gallery and pagination.
+         * Initializes the gallery once the window has loaded.
          */
         function initGallery() {
             if (typeof imageData === 'undefined' || !Array.isArray(imageData)) {
